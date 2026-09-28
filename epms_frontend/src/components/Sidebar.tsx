@@ -7,7 +7,6 @@ import {
   ClipboardCheck,
   Users,
   MessageSquare,
-  TrendingUp,
   BarChart3,
   ChevronDown,
   LogOut,
@@ -46,9 +45,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Performance Pulse", to: "/performance-history/admin", icon: History },
   { label: "Team Pulse", to: "/performance-history/manager", icon: History, privilegedOnly: true, hideForAdmin: true },
   { label: "Continuous Feedback", to: "/continuous-feedback", icon: MessageSquare },
-  { label: "1-on-1 Sync Meetings", to: "/meetings", icon: Users, hideForAdmin: true },
-  { label: "PIP Recovery Plans", to: "/pip", icon: TrendingUp, end: true, hideForAdmin: true },
-  { label: "IDP Development Plans", to: "/idp", icon: GraduationCap, end: true, hideForAdmin: true },
   { label: "Strategic Analytics", to: "/analytics", icon: BarChart3 },
   { label: "System Audit Logs", to: "/audit-logs", icon: FileClock, adminOnly: true },
 ];
@@ -102,9 +98,6 @@ const Sidebar = ({ onClose }: SidebarProps) => {
       case "Performance Pulse":   return isAdmin || isHR || hasPermission("REPORT_VIEW_ALL");
       case "Team Pulse":          return hasPermission("APPRAISAL_VIEW_TEAM") && !isAdmin && !isHR;
       case "Continuous Feedback": return true;
-      case "1-on-1 Sync Meetings":return !isAdmin;
-      case "PIP Recovery Plans":  return (hasPermission("PIP_VIEW_OWN") || hasPermission("PIP_CREATE")) && !isAdmin;
-      case "IDP Development Plans": return !isAdmin;
       case "Strategic Analytics": return isAdmin || isHR || hasPermission("REPORT_VIEW_ALL");
       case "System Audit Logs":   return isAdmin || hasRole("AUDIT_VIEWER");
       default:                    return true;

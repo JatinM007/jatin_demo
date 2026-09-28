@@ -1052,7 +1052,7 @@ export const PerformanceHistoryManagerPage = () => {
       <header className="flex flex-col gap-2">
               <h1 style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', letterSpacing: '-0.3px' }}>Team Performance Tracker</h1>
         {/* <h1 className="text-4xl font-black text-gray-900 tracking-tight">Team Performance Tracker</h1> */}
-        <p className="text-gray-500 font-medium">View chronological performance activities, feedback, and 1-on-1 meeting records for your team.</p>
+        <p className="text-gray-500 font-medium">View chronological performance activities and continuous feedback for your team.</p>
       </header>
 
       {(analyticsData || meetingPulseData) && (
@@ -1257,9 +1257,8 @@ export const PerformanceHistoryManagerPage = () => {
               setCurrentPage(1);
             }}
           >
-            <option value="ALL">All Activities</option>
+            <option value="ALL">All Feedback Activities</option>
             <option value="FEEDBACK">Feedback Only</option>
-            <option value="MEETING">Meetings Only</option>
           </select>
         </div>
       </div>

@@ -1350,9 +1350,8 @@ export const PerformanceHistoryAdminPage = () => {
               value={filterType} 
               onChange={(e) => { setFilterType(e.target.value as any); setCurrentPage(1); }}
             >
-              <option value="ALL">All Activities (Feedback & Meetings)</option>
+              <option value="ALL">All Feedback Activities</option>
               <option value="FEEDBACK">Continuous Feedback Only</option>
-              <option value="MEETING">1-on-1 Meetings Only</option>
             </select>
           </div>
 
@@ -1558,7 +1557,7 @@ export const PerformanceHistoryAdminPage = () => {
         {/* Header */}
         <div className="flex flex-col gap-1 mb-8">
           <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Audit Log / Transparent History</h2>
-          <p className="text-xs text-gray-400 font-medium">Detailed historical record of all published continuous feedback and 1-on-1 meeting interactions.</p>
+          <p className="text-xs text-gray-400 font-medium">Detailed historical record of all published continuous feedback.</p>
         </div>
 
         {isHistoryLoading ? (

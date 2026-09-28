@@ -819,7 +819,7 @@ DEFAULT_MEETINGS_DATA = [
         "meetingTitle": "Monthly Growth & KRA Sync",
         "meetingDate": "2026-09-25",
         "meetingTime": "14:00",
-        "discussionPoints": "Review sprint milestones, team mentorship goals, and IDP progress.",
+        "discussionPoints": "Review sprint milestones, team mentorship goals, and technical capability progress.",
         "keyIssues": "Cross-service API contract harmonization.",
         "actionItems": [
             {
