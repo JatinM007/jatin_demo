@@ -14,6 +14,7 @@ import {
   kpiRoutes,
   continuousRoutes,
   feedback360Routes,
+  managerRoutes,
 } from "./routes";
 import { ActiveCycleProvider } from "./context/ActiveCycleContext";
 import KpiCategoryManager from './pages/kpi/KpiCategoryManager';
@@ -85,8 +86,11 @@ const App = () => {
               <Route key={route.path} path={route.path} element={route.element} />
             ))}
 
-            {/* Manager & Admin/HR KPI Management Routes */}
+            {/* Manager & Admin/HR KPI & Mentor Hub Routes */}
             <Route element={<ProtectedRoute allowedRoles={["MANAGER", "ADMIN", "HR"]} />}>
+              {managerRoutes.map((route) => (
+                <Route key={route.path} path={route.path} element={route.element} />
+              ))}
               {kpiRoutes.filter(r => ['/kpi/team', '/kpi/manage', '/kpi/assign/:employeeId', '/kpi/org-history'].includes(r.path)).map((route) => (
                 <Route key={route.path} path={route.path} element={route.element} />
               ))}

@@ -303,3 +303,100 @@ class RecognitionReward(models.Model):
     def __str__(self):
         return f"{self.title} awarded to {self.recipient.username}"
 
+
+class TechnicalCapabilityParameter(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=200)
+    category = models.CharField(max_length=100, default='Technical Capability')
+    description = models.TextField(blank=True, default='')
+    benchmark_score = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('5.00'),
+        help_text='Expected benchmark score out of 5.0'
+    )
+    weight = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('20.00'),
+        help_text='Weight in percentage'
+    )
+    cycle = models.ForeignKey(
+        PerformanceCycle,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='technical_parameters'
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_tech_parameters'
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Technical Capability Parameter'
+        verbose_name_plural = 'Technical Capability Parameters'
+        ordering = ['category', 'name']
+
+    def __str__(self):
+        return f"{self.name} ({self.category} - {self.weight}%)"
+
+
+class TechnicalCapabilityReview(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    parameter = models.ForeignKey(
+        TechnicalCapabilityParameter,
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+    employee = models.ForeignKey(
+        'employees.EmployeeProfile',
+        on_delete=models.CASCADE,
+        related_name='technical_reviews'
+    )
+    reviewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='given_technical_reviews'
+    )
+    cycle = models.ForeignKey(
+        PerformanceCycle,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='technical_reviews'
+    )
+    score = models.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00')), MaxValueValidator(Decimal('5.00'))]
+    )
+    mentor_assessment = models.TextField(blank=True, default='')
+    evidence_url = models.URLField(max_length=500, blank=True, default='')
+    status = models.CharField(
+        max_length=20,
+        choices=[('DRAFT', 'Draft'), ('SUBMITTED', 'Submitted')],
+        default='DRAFT'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Technical Capability Review'
+        verbose_name_plural = 'Technical Capability Reviews'
+        unique_together = ('parameter', 'employee', 'cycle')
+        ordering = ['parameter__name']
+
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.parameter.name}: {self.score}/5"
+
+

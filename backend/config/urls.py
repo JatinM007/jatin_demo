@@ -2,9 +2,22 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
+def api_root(request):
+    return JsonResponse({
+        "status": "online",
+        "service": "PERFORMAX EPMS API",
+        "version": "1.0.0",
+        "docs": "/api/docs/",
+        "schema": "/api/schema/",
+        "health": "ok"
+    })
+
 urlpatterns = [
+    path('', api_root, name='api_root'),
+    path('health/', api_root, name='api_health'),
     path('admin/', admin.site.urls),
 
     # API Documentation

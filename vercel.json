@@ -1,0 +1,11 @@
+{
+  "buildCommand": "npm --prefix epms_frontend run build",
+  "outputDirectory": "epms_frontend/dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

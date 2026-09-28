@@ -9,11 +9,11 @@ const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen" style={{ background: "#F5F6F8" }}>
+    <div className="flex h-screen bg-[#f8f6ff]">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/30 md:hidden"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs md:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-hidden="true"
         />
@@ -33,9 +33,9 @@ const MainLayout = () => {
         <Header onMenuClick={() => setSidebarOpen(true)} />
         <main
           className="flex-1 overflow-y-auto"
-          style={{ padding: "16px 16px" }}
+          style={{ padding: "16px 20px" }}
         >
-          <div className="max-w-full md:px-2">
+          <div className="max-w-full md:px-1">
             <Outlet />
           </div>
         </main>

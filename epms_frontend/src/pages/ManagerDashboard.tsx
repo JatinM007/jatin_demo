@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Users, CheckCircle2, AlertCircle, HelpCircle, TrendingUp, Layers, Briefcase, AlertTriangle } from 'lucide-react';
 import { useGetManagerDashboardQuery } from '../features/dashboard/dashboardApi';
@@ -50,6 +51,53 @@ const ManagerDashboard: React.FC = () => {
       <div>
         <h1 style={{ fontSize: 18, fontWeight: 500, color: "#111827" }}>Team management</h1>
         <p style={{ fontSize: 13, color: "#9EA3B0", marginTop: 2 }}>Manage your direct reports and their performance cycles.</p>
+      </div>
+
+      {/* Mentor & Manager Operations Hub Banner (M-01 to M-12) */}
+      <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-slate-50 border border-indigo-100/90 rounded-2xl p-4.5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold shrink-0 shadow-md shadow-indigo-100">
+            <Users size={20} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-extrabold text-sm text-indigo-950">Mentor & Manager Operations Center</h3>
+              <span className="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                M-01 to M-12
+              </span>
+            </div>
+            <p className="text-xs text-indigo-700/80 mt-0.5">
+              Supervise assigned mentees, assign tasks, evaluate technical capability parameters, and verify evidence.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <Link
+            to="/manager/mentees"
+            className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-xs cursor-pointer"
+          >
+            Assigned Mentees (M-01)
+          </Link>
+          <Link
+            to="/manager/tasks"
+            className="px-3.5 py-2 rounded-xl bg-white hover:bg-indigo-50 text-indigo-900 border border-indigo-200 font-bold text-xs transition-all shadow-2xs cursor-pointer"
+          >
+            Tasks (M-02, M-03)
+          </Link>
+          <Link
+            to="/manager/technical-capabilities"
+            className="px-3.5 py-2 rounded-xl bg-white hover:bg-indigo-50 text-indigo-900 border border-indigo-200 font-bold text-xs transition-all shadow-2xs cursor-pointer"
+          >
+            Technical (M-04, M-05)
+          </Link>
+          <Link
+            to="/manager/evidence"
+            className="px-3.5 py-2 rounded-xl bg-white hover:bg-indigo-50 text-indigo-900 border border-indigo-200 font-bold text-xs transition-all shadow-2xs cursor-pointer"
+          >
+            Evidence (M-06)
+          </Link>
+        </div>
       </div>
 
       {/* Stat cards */}

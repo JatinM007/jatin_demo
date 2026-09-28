@@ -1,48 +1,69 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
   --dark-mode: class;
 
+  /* Tanvi Design Tokens */
+  --color-ink: #17152e;
+  --color-canvas: #f8f6ff;
+  --color-border: #e4ddf5;
+  --color-muted: #625d78;
+  --color-purple-50: #f3eeff;
+  --color-purple-100: #ebe4ff;
+  --color-purple-200: #c7b5f5;
+  --color-purple-300: #b29af2;
+  --color-purple-400: #9878ee;
+  --color-purple-500: #7b50f0;
+  --color-purple-600: #6d3fea;
+  --color-purple-700: #5526d9;
+  --color-purple-950: #2a155e;
+  --color-neutral-50: #f8f6ff;
+  --color-neutral-100: #f3eeff;
+  --color-neutral-200: #e4ddf5;
+  --color-neutral-400: #9878ee;
+  --color-neutral-900: #2a155e;
+  --color-neutral-950: #17152e;
+
   /* Dailoqa Primary Brand Palette */
-  --color-primary:        #4338CA; /* Electric Indigo */
-  --color-primary-hover:  #3730A3;
-  --color-primary-light:  #EEF2FF;
+  --color-primary:        #6d3fea; /* Primary Purple */
+  --color-primary-hover:  #5526d9;
+  --color-primary-light:  #f3eeff;
   
-  --color-brand-primary:   #4338CA;
-  --color-brand-ai:        #3B4BF9;
-  --color-brand-secondary: #0B0F17; /* Dailoqa Obsidian */
-  --color-obsidian:        #0B0F17;
+  --color-brand-primary:   #6d3fea;
+  --color-brand-ai:        #7b50f0;
+  --color-brand-secondary: #17152e;
+  --color-obsidian:        #17152e;
   
-  --color-page-bg:        #F8FAFC;
-  --color-panel-bg:       #FFFFFF;
-  --color-border-default: #E2E8F0;
-  --color-border-subtle:  #F1F5F9;
-  --color-border-hover:   #CBD5E1;
+  --color-page-bg:        #f8f6ff;
+  --color-panel-bg:       #ffffff;
+  --color-border-default: #e4ddf5;
+  --color-border-subtle:  #f3eeff;
+  --color-border-hover:   #c7b5f5;
 
   /* Typography Colors */
-  --color-content-primary:   #0B0F17;
-  --color-content-secondary: #475569;
-  --color-content-muted:     #94A3B8;
-  --color-content-link:      #4338CA;
-  --color-text-title:        #0B0F17;
-  --color-text-body:         #475569;
-  --color-text-muted:        #94A3B8;
+  --color-content-primary:   #17152e;
+  --color-content-secondary: #625d78;
+  --color-content-muted:     #9878ee;
+  --color-content-link:      #6d3fea;
+  --color-text-title:        #17152e;
+  --color-text-body:         #625d78;
+  --color-text-muted:        #9878ee;
 
-  /* Dailoqa Status & AI Accents */
-  --color-success-fill: #ECFDF5;
-  --color-success-text: #065F46;
-  --color-info-fill:    #EEF2FF;
-  --color-info-text:    #3730A3;
-  --color-warning-fill: #FFFBEB;
-  --color-warning-text: #92400E;
-  --color-danger-fill:  #FEF2F2;
-  --color-danger-text:  #991B1B;
-  --color-neutral-fill: #F1F5F9;
-  --color-neutral-text: #334155;
+  /* Status Accents */
+  --color-success-fill: #ecfdf5;
+  --color-success-text: #065f46;
+  --color-info-fill:    #f3eeff;
+  --color-info-text:    #5526d9;
+  --color-warning-fill: #fffbeb;
+  --color-warning-text: #92400e;
+  --color-danger-fill:  #fef2f2;
+  --color-danger-text:  #991b1b;
+  --color-neutral-fill: #f8f6ff;
+  --color-neutral-text: #625d78;
 
-  --color-surface-base:    #F8FAFC;
-  --color-surface-border:  #E2E8F0;
+  --color-surface-base:    #f8f6ff;
+  --color-surface-border:  #e4ddf5;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -56,88 +77,84 @@ html {
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 13.5px;
-  color: #0B0F17;
-  background: #F8FAFC;
+  color: var(--color-ink, #17152e);
+  background: var(--color-canvas, #f8f6ff);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Dailoqa Design System Utility Classes */
-.dailoqa-gradient {
-  background: linear-gradient(135deg, #0B0F17 0%, #1E1B4B 50%, #312E81 100%);
+/* ========================================================================= */
+/* Tanvi Keyframe Animations                                                 */
+/* ========================================================================= */
+
+@keyframes performax-ma-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.92);
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
 }
 
-.dailoqa-gradient-ai {
-  background: linear-gradient(135deg, #4338CA 0%, #3B82F6 100%);
+@keyframes performax-slash-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
-.dailoqa-card {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 4px 20px -4px rgba(11, 15, 23, 0.05);
-  border-radius: 16px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+@keyframes performax-spark-bloom {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0) rotate(0deg);
+  }
+  35% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.6) rotate(90deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.4) rotate(180deg);
+  }
 }
 
-.dailoqa-card:hover {
-  border-color: #CBD5E1;
-  box-shadow: 0 8px 30px -4px rgba(11, 15, 23, 0.08);
+@keyframes performax-dot-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-.dailoqa-pill {
-  border-radius: 9999px;
-  padding: 4px 12px;
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.dailoqa-btn-primary {
-  background: #0B0F17;
-  color: #FFFFFF;
-  font-weight: 500;
-  border-radius: 12px;
-  padding: 8px 18px;
-  transition: all 0.15s ease-in-out;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.dailoqa-btn-primary:hover {
-  background: #1E293B;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(11, 15, 23, 0.15);
-}
-
-.dailoqa-btn-indigo {
-  background: #4338CA;
-  color: #FFFFFF;
-  font-weight: 500;
-  border-radius: 12px;
-  padding: 8px 18px;
-  transition: all 0.15s ease-in-out;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.dailoqa-btn-indigo:hover {
-  background: #3730A3;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(67, 56, 202, 0.25);
-}
-
-.glass-header {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+@keyframes performax-perfor-zoom-from-back {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, -500px) scale(0.22);
+    filter: blur(18px);
+  }
+  45% {
+    opacity: 0.85;
+    filter: blur(4px);
+  }
+  80% {
+    transform: translate3d(0, 0, 16px) scale(1.04);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
 }
 
 @keyframes fadeIn {
@@ -149,8 +166,268 @@ body {
   animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* ========================================================================= */
+/* Tanvi Animated Logo Styles                                                */
+/* ========================================================================= */
+
+.performax-animated-wrapper {
+  position: relative;
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+
+.performax-animated-wrapper::before {
+  position: absolute;
+  inset: -1.5rem -2rem;
+  content: "";
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse,
+    color-mix(in oklab, var(--color-purple-200) 22%, transparent),
+    transparent 68%
+  );
+  filter: blur(0.75rem);
+}
+
+.performax-animated-wrapper:focus-visible {
+  border-radius: 0.5rem;
+  box-shadow: 0 0 0 0.2rem color-mix(in oklab, white 30%, transparent);
+}
+
+.performax-animated-logo {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-sans);
+  font-size: clamp(1.5rem, 2.2vw, 2.1rem);
+  font-weight: 900;
+  letter-spacing: -0.015em;
+  line-height: 1;
+  perspective: 1200px;
+  filter: drop-shadow(
+    0 0.35rem 0.9rem
+      color-mix(in oklab, var(--color-purple-200) 28%, transparent)
+  );
+}
+
+.performax-animated-perfor {
+  display: inline-block;
+  color: #ffffff;
+  opacity: 0;
+  transform: translate3d(0, 0, -500px) scale(0.22);
+  filter: blur(18px);
+  animation: performax-perfor-zoom-from-back 1.05s
+    cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+  will-change: transform, opacity, filter;
+}
+
+.performax-animated-max {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.04em;
+  color: #ffffff;
+  text-shadow:
+    0 0 0.08rem color-mix(in oklab, white 55%, transparent),
+    0 0 1rem color-mix(in oklab, var(--color-purple-200) 42%, transparent);
+}
+
+.performax-animated-ma {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(14px) scale(0.92);
+  filter: blur(8px);
+  animation: performax-ma-fade-in 0.8s
+    cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+}
+
+.performax-animated-x {
+  position: relative;
+  display: inline-flex;
+  width: 0.72em;
+  height: 0.9em;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.02em;
+}
+
+.performax-animated-x-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(
+    0 0 0.35rem
+      color-mix(in oklab, var(--color-purple-200) 48%, transparent)
+  );
+}
+
+.performax-animated-slash {
+  stroke: #ffffff;
+  stroke-width: 12.5;
+  stroke-linecap: round;
+  stroke-dasharray: 90;
+}
+
+.performax-animated-slash-1 {
+  stroke-dashoffset: 90;
+  animation: performax-slash-draw 0.5s
+    cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+}
+
+.performax-animated-slash-2 {
+  stroke-dashoffset: -90;
+  animation: performax-slash-draw 0.5s
+    cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+}
+
+.performax-animated-spark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 0 0.875rem 0.125rem #a855f7;
+  opacity: 0;
+  pointer-events: none;
+  animation: performax-spark-bloom 0.65s
+    cubic-bezier(0.1, 0.9, 0.2, 1) 0.75s forwards;
+}
+
+.performax-animated-dot {
+  width: 0.22em;
+  height: 0.22em;
+  margin-left: 0.22em;
+  border-radius: 50%;
+  background: #c7b5f5;
+  box-shadow: 0 0 0.75rem rgb(199 181 245 / 80%);
+  opacity: 0;
+  animation: performax-dot-pop 0.75s
+    cubic-bezier(0.34, 1.56, 0.64, 1) 0.75s forwards;
+}
+
+/* ========================================================================= */
+/* Tanvi Layout & Shell Classes                                              */
+/* ========================================================================= */
+
+.login-panel {
+  background:
+    radial-gradient(circle at 82% 22%, rgb(217 204 248 / 24%), transparent 28%),
+    radial-gradient(circle at 68% 82%, rgb(201 183 246 / 18%), transparent 32%),
+    linear-gradient(
+      145deg,
+      #5426d8 0%,
+      #6938e8 30%,
+      #7b4bef 55%,
+      #a98af3 78%,
+      #d9ccf8 100%
+    );
+}
+
+.app-sidebar {
+  background:
+    radial-gradient(circle at 12% 5%, color-mix(in oklab, #c7b5f5 28%, transparent), transparent 26%),
+    radial-gradient(circle at 88% 72%, color-mix(in oklab, #9878ee 28%, transparent), transparent 32%),
+    linear-gradient(165deg, #5526d9 0%, #6d3fea 55%, #7b50f0 112%);
+  box-shadow: 0.75rem 0 2.5rem color-mix(in oklab, #5526d9 14%, transparent);
+}
+
+.sidebar-profile {
+  border-color: color-mix(in oklab, white 18%, transparent);
+  background: color-mix(in oklab, white 9%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white 12%, transparent);
+  backdrop-filter: blur(0.75rem);
+}
+
+.app-header {
+  background: color-mix(in oklab, white 94%, #f3eeff);
+  box-shadow: 0 0.2rem 1rem color-mix(in oklab, #5b2be0 5%, transparent);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Tanvi Navigation Items */
+.nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  color: color-mix(in oklab, white 82%, var(--color-purple-200));
+  font-weight: 500;
+  font-size: 0.8125rem;
+  transition: all 160ms ease;
+  border: 1px solid transparent;
+}
+
+.nav-item:hover {
+  background: color-mix(in oklab, white 12%, transparent);
+  color: white;
+}
+
+.nav-item-active {
+  background: linear-gradient(
+    100deg,
+    color-mix(in oklab, white 22%, transparent),
+    color-mix(in oklab, var(--color-purple-200) 24%, transparent)
+  ) !important;
+  border-color: color-mix(in oklab, white 16%, transparent);
+  color: white !important;
+  font-weight: 600;
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 18%, transparent),
+    0 0.35rem 1.25rem color-mix(in oklab, #c7b5f5 22%, transparent);
+}
+
+/* Tanvi Buttons, Cards, Fields */
+.button-primary {
+  border: 1px solid var(--color-purple-600);
+  background: var(--color-purple-600);
+  color: white;
+  box-shadow: 0 0.25rem 0.8rem color-mix(in oklab, var(--color-purple-600) 20%, transparent);
+  border-radius: 0.75rem;
+  padding: 0.625rem 1rem;
+  font-weight: 600;
+  transition: all 160ms ease;
+  cursor: pointer;
+}
+
+.button-primary:hover {
+  background: var(--color-purple-700);
+  border-color: var(--color-purple-700);
+  transform: translateY(-1px);
+}
+
+.field {
+  min-height: 2.75rem;
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: white;
+  padding: 0.65rem 0.85rem;
+  color: var(--color-ink);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.field:focus {
+  border-color: var(--color-purple-600);
+  box-shadow: 0 0 0 0.2rem var(--color-purple-100);
+}
+
+.field::placeholder {
+  color: var(--color-muted);
+}
+
 /* Polished Scrollbar */
 ::-webkit-scrollbar        { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track  { background: transparent; }
-::-webkit-scrollbar-thumb  { background: #CBD5E1; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+::-webkit-scrollbar-thumb  { background: #c7b5f5; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #9878ee; }

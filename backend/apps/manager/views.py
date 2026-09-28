@@ -1,114 +1,53 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import permissions, status
-from apps.accounts.models import UserRole
-from apps.goals.models import Goal
-from apps.evidence.models import EvidenceSubmission
-from apps.performance.models import Appraisal
-from apps.employees.models import EmployeeProfile
+"""
+Tech Manager Module Views Facade
+All views have been sorted and organized into the `apps.manager.views` package:
+  - mentees_views.py              (M-01: View Assigned Interns/Employees)
+  - tasks_views.py                (M-02: Assign Tasks, M-03: Manage Tasks & Goals)
+  - technical_parameters_views.py (M-04: Manage Technical Capability Parameters)
+  - technical_reviews_views.py    (M-05: Review Technical Capability Matrix)
+  - evidence_views.py             (M-06: View & Review Evidence Submissions)
+  - feedback_views.py             (M-07: Give Feedback, M-08: Review Employee Feedback)
+  - appraisal_views.py            (M-09: Conduct Review, M-10: Save Draft, M-11: Submit Review)
+  - history_views.py              (M-12: View Previous Reviews & Archive)
+  - dashboard_views.py            (Manager Telemetry & Overview Dashboard)
+"""
 
+from .views import (
+    IsManagerUser,
+    get_manager_reports_qs,
+    ManagerMenteesView,
+    ManagerTasksView,
+    ManagerTaskDetailView,
+    ManagerTechnicalParametersView,
+    ManagerTechnicalParameterDetailView,
+    ManagerTechnicalReviewsView,
+    ManagerEvidenceView,
+    ManagerEvidenceDecisionView,
+    ManagerGiveFeedbackView,
+    ManagerEmployeeFeedbacksView,
+    ManagerAppraisalSubmissionsView,
+    ManagerSaveAppraisalDraftView,
+    ManagerSubmitAppraisalView,
+    ManagerHistoricalReviewsView,
+    ManagerDashboardView,
+)
 
-class IsManagerUser(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and (
-            request.user.role in [UserRole.MANAGER, UserRole.HR, UserRole.SUPER_ADMIN]
-        ))
-
-
-class ManagerDashboardView(APIView):
-    permission_classes = [IsManagerUser]
-
-    def get(self, request):
-        direct_reports = EmployeeProfile.objects.filter(manager=request.user)
-        report_ids = [p.user.id for p in direct_reports]
-
-        total_team_members = direct_reports.count()
-        pending_evidence = EvidenceSubmission.objects.filter(goal__employee__in=report_ids, review_status='PENDING').count()
-        pending_appraisals = Appraisal.objects.filter(employee__in=report_ids, status='SUBMITTED').count()
-
-        return Response({
-            'code': 200,
-            'data': {
-                'teamSize': total_team_members,
-                'pendingEvidenceReviews': pending_evidence,
-                'pendingAppraisals': pending_appraisals,
-                'teamAverageScore': 8.4,
-            }
-        })
-
-
-class ManagerTeamGoalsView(APIView):
-    permission_classes = [IsManagerUser]
-
-    def get(self, request):
-        direct_reports = EmployeeProfile.objects.filter(manager=request.user)
-        report_ids = [p.user.id for p in direct_reports]
-        goals = Goal.objects.filter(employee__in=report_ids).select_related('employee', 'cycle')
-
-        data = [{
-            'id': str(g.id),
-            'employeeName': g.employee.username,
-            'title': g.title,
-            'weightage': float(g.weightage),
-            'progress': float(g.progress_percentage),
-            'status': g.status,
-            'priority': g.priority,
-        } for g in goals]
-        return Response({'code': 200, 'data': data})
-
-
-class ManagerEvidenceReviewsView(APIView):
-    permission_classes = [IsManagerUser]
-
-    def get(self, request):
-        direct_reports = EmployeeProfile.objects.filter(manager=request.user)
-        report_ids = [p.user.id for p in direct_reports]
-        evidence = EvidenceSubmission.objects.filter(goal__employee__in=report_ids).select_related('goal', 'submitted_by')
-
-        data = [{
-            'id': str(e.id),
-            'internName': e.submitted_by.username,
-            'goalTitle': e.goal.title,
-            'title': e.title,
-            'evidenceUrl': e.evidence_url,
-            'reviewStatus': e.review_status,
-            'reviewerRemarks': e.reviewer_remarks,
-        } for e in evidence]
-        return Response({'code': 200, 'data': data})
-
-
-class ManagerEvidenceDecisionView(APIView):
-    permission_classes = [IsManagerUser]
-
-    def post(self, request, pk):
-        evidence = EvidenceSubmission.objects.filter(id=pk).first()
-        if not evidence:
-            return Response({'code': 404, 'message': 'Evidence not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        status_choice = request.data.get('status', 'APPROVED')
-        remarks = request.data.get('remarks', '')
-        evidence.review_status = status_choice
-        evidence.reviewer_remarks = remarks
-        evidence.reviewed_by = request.user
-        evidence.save()
-
-        return Response({'code': 200, 'message': f'Evidence has been {status_choice.lower()}.'})
-
-
-class ManagerAppraisalSubmissionsView(APIView):
-    permission_classes = [IsManagerUser]
-
-    def get(self, request):
-        direct_reports = EmployeeProfile.objects.filter(manager=request.user)
-        report_ids = [p.user.id for p in direct_reports]
-        appraisals = Appraisal.objects.filter(employee__in=report_ids).select_related('employee', 'cycle')
-
-        data = [{
-            'id': str(a.id),
-            'employeeName': a.employee.username,
-            'cycleName': a.cycle.name,
-            'status': a.status,
-            'selfScore': float(a.self_criteria_score) if a.self_criteria_score else None,
-            'managerScore': float(a.manager_criteria_score) if a.manager_criteria_score else None,
-        } for a in appraisals]
-        return Response({'code': 200, 'data': data})
+__all__ = [
+    'IsManagerUser',
+    'get_manager_reports_qs',
+    'ManagerMenteesView',
+    'ManagerTasksView',
+    'ManagerTaskDetailView',
+    'ManagerTechnicalParametersView',
+    'ManagerTechnicalParameterDetailView',
+    'ManagerTechnicalReviewsView',
+    'ManagerEvidenceView',
+    'ManagerEvidenceDecisionView',
+    'ManagerGiveFeedbackView',
+    'ManagerEmployeeFeedbacksView',
+    'ManagerAppraisalSubmissionsView',
+    'ManagerSaveAppraisalDraftView',
+    'ManagerSubmitAppraisalView',
+    'ManagerHistoricalReviewsView',
+    'ManagerDashboardView',
+]
