@@ -72,7 +72,7 @@ const KpiLibraryEntry: React.FC = () => {
     setFormData({ ...formData, [name]: name.endsWith('Id') ? parseInt(value) : value });
   };
 
-  const handleDetailChange = (index: number, field: keyof FormKpiDetail, value: any) => {
+  const handleDetailChange = (index: number, field: string, value: any) => {
     const newDetails = [...details];
 
     let updatedItem: FormKpiDetail = {

@@ -64,7 +64,7 @@ const GoalManagement: React.FC = () => {
     { skip: !effectiveCycleId || isAdminOrHr || !user?.id }
   );
   const goalSets = isAdminOrHr ? (deptGoalSetsResponse?.data || []) : (teamGoalSetsResponse?.data || []);
-  const goalStatusMap = new Map<number, string>(goalSets.map(gs => [gs.employeeId, gs.status]));
+  const goalStatusMap = new Map<number | string, string>(goalSets.map(gs => [gs.employeeId, gs.status]));
 
   const filteredEmployees = employees.filter(emp => {
     if (!isAdmin && emp.id === user?.id) return false;

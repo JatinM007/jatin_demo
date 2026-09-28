@@ -1,197 +1,311 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell
-} from 'recharts';
-import { Trophy, Target, Clock, ClipboardList, MessageSquare, AlertTriangle, TrendingUp } from 'lucide-react';
-import { useGetEmployeeDashboardQuery } from '../features/dashboard/dashboardApi';
-import { useDownloadReportMutation } from '../features/report/reportApi';
+  Award, Target, ClipboardList, FileText, UserCheck,
+  Trophy, User, Bell, RefreshCw, Compass
+} from 'lucide-react';
+import {
+  useGetInternOverviewQuery,
+  useGetInternGoalsQuery,
+  useUpdateInternGoalProgressMutation,
+  useAddInternGoalCommentMutation,
+  useGetInternTasksQuery,
+  useCompleteInternTaskMutation,
+  useGetInternEvidenceQuery,
+  useSubmitInternEvidenceMutation,
+  useGetInternSelfAppraisalQuery,
+  useSubmitInternSelfAppraisalMutation,
+  useGetInternPublishedFeedbackQuery,
+  useReplyToMentorFeedbackMutation,
+  useGetUnreadNotificationsCountQuery
+} from '../features/dashboard/dashboardApi';
 import { useAuth } from '../hooks/useAuth';
-import { toast } from 'react-toastify';
-import DashboardStatCard from '../components/dashboard/DashboardStatCard';
-import ChartCard from '../components/dashboard/ChartCard';
-import TaskPanel from '../components/dashboard/TaskPanel';
+import InternOverviewTab from '../components/intern/InternOverviewTab';
+import InternGoalsTab from '../components/intern/InternGoalsTab';
+import InternTasksTab from '../components/intern/InternTasksTab';
+import InternEvidenceTab from '../components/intern/InternEvidenceTab';
+import InternEvaluationTab from '../components/intern/InternEvaluationTab';
+import InternFormsTab from '../components/intern/InternFormsTab';
+import InternResultsTab from '../components/intern/InternResultsTab';
+import InternProfileTab from '../components/intern/InternProfileTab';
+import { InternJourneyTab } from '../components/intern/InternJourneyTab';
+import InternNotificationsModal from '../components/intern/InternNotificationsModal';
 
-const COLORS = ['#1A56DB', '#E4E6EC'];
+type DashboardTab = 'overview' | 'journey' | 'goals' | 'tasks' | 'evidence' | 'evaluation' | 'forms' | 'results' | 'profile';
 
-const EmployeeDashboard: React.FC = () => {
-  const { data, isLoading, error } = useGetEmployeeDashboardQuery();
+export const EmployeeDashboard: React.FC = () => {
   const { user } = useAuth();
-  const [downloadReport] = useDownloadReportMutation();
+  const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
+  const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
+  const [evidencePreselectedGoalId, setEvidencePreselectedGoalId] = useState<string>('');
 
-  const handleDownload = async (format: 'pdf' | 'excel') => {
-    if (!user?.id) return;
-    try {
-      await downloadReport({
-        endpoint: 'performance-trend',
-        params: { employeeId: user.id, format },
-        fileName: `Performance_Trend_${user.id}.${format === 'excel' ? 'xlsx' : 'pdf'}`,
-      }).unwrap();
-      toast.success(`Downloading performance trend as ${format.toUpperCase()}...`);
-    } catch (err) {
-      toast.error('Failed to download performance trend.');
-    }
+  // Primary Queries
+  const {
+    data: overviewData,
+    isLoading: isOverviewLoading,
+    refetch: refetchOverview,
+  } = useGetInternOverviewQuery();
+
+  const {
+    data: goals = [],
+    isLoading: isGoalsLoading,
+    refetch: refetchGoals,
+  } = useGetInternGoalsQuery();
+
+  const {
+    data: tasks = [],
+    isLoading: isTasksLoading,
+    refetch: refetchTasks,
+  } = useGetInternTasksQuery();
+
+  const {
+    data: evidenceList = [],
+    isLoading: isEvidenceLoading,
+    refetch: refetchEvidence,
+  } = useGetInternEvidenceQuery();
+
+  const {
+    data: selfAppraisal,
+    isLoading: isAppraisalLoading,
+    refetch: refetchSelfAppraisal,
+  } = useGetInternSelfAppraisalQuery();
+
+  const {
+    data: publishedFeedback,
+    isLoading: isFeedbackLoading,
+    refetch: refetchFeedback,
+  } = useGetInternPublishedFeedbackQuery();
+
+  const {
+    data: unreadNotifs,
+    refetch: refetchUnreadNotifs,
+  } = useGetUnreadNotificationsCountQuery();
+
+  // Primary Mutations
+  const [updateGoalProgress] = useUpdateInternGoalProgressMutation();
+  const [addGoalComment] = useAddInternGoalCommentMutation();
+  const [completeTask] = useCompleteInternTaskMutation();
+  const [submitEvidence] = useSubmitInternEvidenceMutation();
+  const [submitSelfAppraisal] = useSubmitInternSelfAppraisalMutation();
+  const [replyToFeedback] = useReplyToMentorFeedbackMutation();
+
+  const handleOpenEvidenceForGoal = (goalId: string) => {
+    setEvidencePreselectedGoalId(goalId);
+    setActiveTab('evidence');
   };
 
-  if (isLoading) return <div className="py-16 text-center" style={{ color: "#9EA3B0", fontSize: 13 }}>Loading your performance metrics…</div>;
-  if (error) return <div className="py-16 text-center" style={{ color: "#791F1F", fontSize: 13 }}>Error loading dashboard.</div>;
+  const handleRefreshAll = () => {
+    refetchOverview();
+    refetchGoals();
+    refetchTasks();
+    refetchEvidence();
+    refetchSelfAppraisal();
+    refetchFeedback();
+    refetchUnreadNotifs();
+  };
+
+  const internName = user?.staffName || (user as any)?.username || (user as any)?.profile?.full_name || 'Intern';
+
+  const tabs: Array<{ id: DashboardTab; label: string; icon: React.ReactNode; badge?: number }> = [
+    { id: 'overview', label: 'Overview', icon: <Award size={16} /> },
+    { id: 'journey', label: 'My Journey', icon: <Compass size={16} /> },
+    { id: 'goals', label: 'Goals & Milestones', icon: <Target size={16} />, badge: goals.length },
+    { id: 'tasks', label: 'Tasks & Sprints', icon: <ClipboardList size={16} />, badge: tasks.filter((t: any) => !t.isCompleted && t.status !== 'COMPLETED').length },
+    { id: 'evidence', label: 'Deliverables & Evidence', icon: <FileText size={16} />, badge: evidenceList.length },
+    { id: 'evaluation', label: 'Self-Appraisal', icon: <UserCheck size={16} /> },
+    { id: 'forms', label: 'HR Surveys', icon: <FileText size={16} /> },
+    { id: 'results', label: 'Published Results', icon: <Trophy size={16} /> },
+    { id: 'profile', label: 'My Placement', icon: <User size={16} /> },
+  ];
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 style={{ fontSize: 18, fontWeight: 500, color: "#111827" }}>Welcome back!</h1>
-        <p style={{ fontSize: 13, color: "#9EA3B0", marginTop: 2 }}>Your performance overview for the current cycle.</p>
-      </div>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-100">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <Award className="text-amber-500" size={26} />
+            Welcome back, {internName}
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            {overviewData?.cycle?.name || 'Active Performance Evaluation'} • {overviewData?.cycle?.currentPhase || 'Active Milestone Sprint'}
+          </p>
+        </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <DashboardStatCard title="Performance score" value={`${data?.currentScore?.toFixed(1) ?? 0}%`} icon={<Trophy size={15} />} color="blue" />
-        <DashboardStatCard title="KPI completion" value={`${data?.kpiCompletionPercentage ?? 0}%`} icon={<Target size={15} />} color="green" />
-        <DashboardStatCard title="Pending tasks" value={data?.pendingTasksCount ?? 0} icon={<ClipboardList size={15} />} color="orange" />
-        <DashboardStatCard title="Feedback" value={data?.feedbackCount ?? 0} icon={<MessageSquare size={15} />} color="purple" />
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2">
-          <ChartCard 
-            title="Performance trend"
-            action={
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleDownload('pdf')}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px',
-                    background: '#EEF3FD', color: '#1A56DB', border: '0.5px solid #1A56DB', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer'
-                  }}
-                >
-                  <ClipboardList size={11} /> PDF
-                </button>
-                <button
-                  onClick={() => handleDownload('excel')}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px',
-                    background: '#ECFDF3', color: '#027A48', border: '0.5px solid #027A48', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer'
-                  }}
-                >
-                  <ClipboardList size={11} /> Excel
-                </button>
-              </div>
-            }
+        <div className="flex items-center gap-2.5">
+          {/* View My Journey Quick Action */}
+          <button
+            onClick={() => setActiveTab('journey')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shadow-2xs ${
+              activeTab === 'journey'
+                ? 'bg-emerald-700 text-white'
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+            }`}
+            title="View your comprehensive internship journey roadmap"
           >
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data?.performanceTrend}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F0F2F6" />
-                <XAxis dataKey="period" stroke="#9EA3B0" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#9EA3B0" fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} />
-                <Tooltip contentStyle={{ borderRadius: 8, border: "0.5px solid #E4E6EC", boxShadow: "none", fontSize: 12 }} />
-                <Line type="monotone" dataKey="score" stroke="#1A56DB" strokeWidth={2} dot={{ r: 3, fill: '#1A56DB', strokeWidth: 2, stroke: '#fff' }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </div>
-        <div>
-          <ChartCard title="KPI status">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={data?.kpiStatus} cx="50%" cy="50%" innerRadius={55} outerRadius={75} paddingAngle={4} dataKey="value">
-                  {data?.kpiStatus?.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ borderRadius: 8, border: "0.5px solid #E4E6EC", boxShadow: "none", fontSize: 12 }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartCard>
+            <Compass size={14} />
+            <span>View My Journey</span>
+          </button>
+
+          {/* Notification Button */}
+          <button
+            onClick={() => setIsNotifModalOpen(true)}
+            className="relative p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors shadow-2xs"
+            title="Notifications"
+          >
+            <Bell size={18} />
+            {unreadNotifs && unreadNotifs.unread_count > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white font-bold text-[10px] rounded-full flex items-center justify-center animate-pulse">
+                {unreadNotifs.unread_count}
+              </span>
+            )}
+          </button>
+
+          {/* Refresh Data Button */}
+          <button
+            onClick={handleRefreshAll}
+            className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors shadow-2xs"
+            title="Refresh dashboard data"
+          >
+            <RefreshCw size={18} />
+          </button>
+
+          <span className="bg-amber-50 text-amber-700 font-bold text-[11px] uppercase tracking-wider px-3 py-1.5 rounded-xl border border-amber-200 shadow-2xs">
+            Intern Scope
+          </span>
         </div>
       </div>
 
-      {/* Tasks & Timeline */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <TaskPanel
-          tasks={data?.tasks.map(t => ({
-            id: t.id,
-            title: t.title,
-            deadline: t.deadline,
-            priority: t.priority as 'High' | 'Medium' | 'Low',
-          })) ?? []}
-        />
-        <div style={{ background: "#FFFFFF", border: "0.5px solid #E4E6EC", borderRadius: 12, padding: "16px 18px" }}>
-          <div className="flex items-center gap-2" style={{ marginBottom: 16 }}>
-            <Clock size={15} style={{ color: "#1A56DB" }} aria-hidden="true" />
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#111827" }}>Appraisal timeline</p>
-          </div>
-          <div className="space-y-4">
-            {data?.appraisalTimeline.map((step, idx) => (
-              <div key={idx} className="flex gap-3">
-                <div className="flex flex-col items-center">
-                  <div style={{
-                    width: 10, height: 10, borderRadius: "50%", flexShrink: 0,
-                    background: step.active ? "#1A56DB" : "#E4E6EC",
-                    outline: step.active ? "3px solid #EEF3FD" : "none",
-                  }} />
-                  {idx !== (data?.appraisalTimeline.length ?? 0) - 1 && (
-                    <div style={{ width: 1, flex: 1, background: "#F0F2F6", margin: "3px 0" }} />
-                  )}
-                </div>
-                <div style={{ paddingBottom: 4 }}>
-                  <p style={{ fontSize: 13, fontWeight: step.active ? 500 : 400, color: step.active ? "#1A56DB" : "#111827" }}>{step.phase}</p>
-                  <p style={{ fontSize: 11, color: "#9EA3B0", marginTop: 1 }}>{step.date} — {step.status}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Navigation Tabs Bar */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-200/80 select-none scrollbar-none">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
 
-      {/* New Employee fields */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Team Rank & Days Left */}
-        <div>
-          <div className="grid grid-cols-2 gap-3">
-            {data?.teamRank !== undefined && (
-              <div style={{ background: "#FFFFFF", border: "0.5px solid #E4E6EC", borderRadius: 12, padding: "12px 14px", textAlign: "center" }}>
-                <span style={{ fontSize: 11, color: "#9EA3B0", display: "block", marginBottom: 4 }}>Your rank</span>
-                <span style={{ fontSize: 16, fontWeight: 500, color: "#1A56DB" }}>
-                  #{data.teamRank}
+          return (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setActiveTab(tab.id);
+                if (tab.id !== 'evidence') setEvidencePreselectedGoalId('');
+              }}
+              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-150 ${
+                isActive
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+              {tab.badge !== undefined && tab.badge > 0 && (
+                <span
+                  className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                    isActive ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  {tab.badge}
                 </span>
-                <span style={{ fontSize: 11, color: "#9EA3B0", display: "block", marginTop: 4 }}>of {data.teamSize}</span>
-              </div>
-            )}
-            {data?.daysUntilNextDeadline !== undefined && data.daysUntilNextDeadline >= 0 && (
-              <div style={{ background: "#FFFFFF", border: "0.5px solid #E4E6EC", borderRadius: 12, padding: "12px 14px", textAlign: "center" }}>
-                <span style={{ fontSize: 11, color: "#9EA3B0", display: "block", marginBottom: 4 }}>Days until</span>
-                <span style={{ fontSize: 16, fontWeight: 500, color: data.daysUntilNextDeadline <= 3 ? "#E24B4A" : "#1A56DB" }}>
-                  {data.daysUntilNextDeadline}
-                </span>
-                <span style={{ fontSize: 11, color: "#9EA3B0", display: "block", marginTop: 4 }}>next deadline</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Manager Feedback */}
-        {data?.managerLastScore !== undefined && (
-          <div style={{ background: "#FFFFFF", border: "0.5px solid #E4E6EC", borderRadius: 12, padding: "16px 18px" }}>
-            <div className="flex items-center gap-2" style={{ marginBottom: 12 }}>
-              <MessageSquare size={15} style={{ color: "#1A56DB" }} aria-hidden="true" />
-              <p style={{ fontSize: 14, fontWeight: 500, color: "#111827" }}>Manager feedback</p>
-            </div>
-            <div>
-              <p style={{ fontSize: 13, color: "#5A6070", marginBottom: 6 }}>Last evaluation score</p>
-              <p style={{ fontSize: 16, fontWeight: 500, color: "#1A56DB", marginBottom: 12 }}>
-                {data.managerLastScore?.toFixed(1) ?? 'N/A'}
-              </p>
-              {data.managerLastComment && (
-                <div style={{ paddingTop: 12, borderTop: "0.5px solid #E4E6EC" }}>
-                  <p style={{ fontSize: 11, color: "#9EA3B0", marginBottom: 6 }}>Comment</p>
-                  <p style={{ fontSize: 12, color: "#5A6070", lineHeight: 1.5 }}>{data.managerLastComment}</p>
-                </div>
               )}
-            </div>
-          </div>
-        )}
+            </button>
+          );
+        })}
       </div>
+
+      {/* Tab Panels */}
+      <main className="transition-opacity duration-150">
+        {activeTab === 'overview' && (
+          <InternOverviewTab
+            overviewData={overviewData}
+            isLoading={isOverviewLoading}
+            onNavigateToTab={(t) => setActiveTab(t as DashboardTab)}
+            onRefresh={refetchOverview}
+          />
+        )}
+
+        {activeTab === 'journey' && (
+          <InternJourneyTab
+            onNavigateTab={(t) => setActiveTab(t as DashboardTab)}
+          />
+        )}
+
+        {activeTab === 'goals' && (
+          <InternGoalsTab
+            goals={goals}
+            isLoading={isGoalsLoading}
+            onUpdateProgress={async (goalId, progress, comment) => {
+              return updateGoalProgress({ id: goalId, progress, comment }).unwrap();
+            }}
+            onAddComment={async (goalId, comment, parentId) => {
+              return addGoalComment({ id: goalId, comment, parentId }).unwrap();
+            }}
+            onOpenEvidenceModal={handleOpenEvidenceForGoal}
+            onRefetch={refetchGoals}
+          />
+        )}
+
+        {activeTab === 'tasks' && (
+          <InternTasksTab
+            tasks={tasks}
+            isLoading={isTasksLoading}
+            onCompleteTask={async (payload) => {
+              return completeTask(payload).unwrap();
+            }}
+            onRefetch={refetchTasks}
+          />
+        )}
+
+        {activeTab === 'evidence' && (
+          <InternEvidenceTab
+            evidenceList={evidenceList}
+            goals={goals}
+            isLoading={isEvidenceLoading}
+            onSubmitEvidence={async (fd) => {
+              return submitEvidence(fd).unwrap();
+            }}
+            preselectedGoalId={evidencePreselectedGoalId}
+            onRefetch={refetchEvidence}
+            onCloseDirectModal={() => setEvidencePreselectedGoalId('')}
+          />
+        )}
+
+        {activeTab === 'evaluation' && (
+          <InternEvaluationTab
+            selfAppraisal={selfAppraisal}
+            isLoading={isAppraisalLoading}
+            onSubmitSelfAppraisal={async (payload) => {
+              return submitSelfAppraisal(payload).unwrap();
+            }}
+            onRefetch={refetchSelfAppraisal}
+          />
+        )}
+
+        {activeTab === 'forms' && <InternFormsTab />}
+
+        {activeTab === 'results' && (
+          <InternResultsTab
+            feedbackData={publishedFeedback}
+            isLoading={isFeedbackLoading}
+            onReplyToFeedback={async (replyText) => {
+              return replyToFeedback({ replyText }).unwrap();
+            }}
+            onRefetch={refetchFeedback}
+          />
+        )}
+
+        {activeTab === 'profile' && (
+          <InternProfileTab
+            user={user}
+            mentor={overviewData?.mentor}
+            cycleName={overviewData?.cycle?.name}
+          />
+        )}
+      </main>
+
+      {/* Notifications Modal */}
+      <InternNotificationsModal
+        isOpen={isNotifModalOpen}
+        onClose={() => setIsNotifModalOpen(false)}
+        notifications={[]}
+        onRefetch={refetchUnreadNotifs}
+      />
     </div>
   );
 };

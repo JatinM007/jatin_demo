@@ -4440,74 +4440,14 @@ class AuditLogsExportCompatView(APIView):
 # Performance History & Pulse Compatibility
 # ==========================================
 
-class PerformanceHistoryPulseCompatView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request):
-        return ok_response([
-            {
-                "historyId": 1,
-                "employeeId": 1,
-                "employeeName": request.user.username,
-                "managerId": 2,
-                "managerName": "Executive Leadership",
-                "performerId": 2,
-                "performerName": "Executive Leadership",
-                "sourceType": "FEEDBACK",
-                "sourceId": 1,
-                "title": "Quarterly Technical Milestone Achieved",
-                "description": "Demonstrated excellent leadership in resolving enterprise system integration.",
-                "feedbackType": "PRAISE",
-                "tagName": "Technical Excellence",
-                "createdAt": "2026-09-20T12:00:00Z"
-            },
-            {
-                "historyId": 2,
-                "employeeId": 1,
-                "employeeName": request.user.username,
-                "managerId": 2,
-                "managerName": "Executive Leadership",
-                "performerId": 2,
-                "performerName": "Executive Leadership",
-                "sourceType": "MEETING",
-                "sourceId": 1,
-                "title": "Bi-Weekly 1-on-1 Sync",
-                "description": "Reviewed OKRs, sprint delivery, and roadmap execution.",
-                "createdAt": "2026-09-18T10:00:00Z"
-            }
-        ])
-
-
-class PerformanceHistoryAllCompatView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        items = [
-            {
-                "historyId": 1,
-                "employeeId": 1,
-                "employeeName": request.user.username,
-                "managerId": 2,
-                "managerName": "Executive Leadership",
-                "performerId": 2,
-                "performerName": "Executive Leadership",
-                "sourceType": "FEEDBACK",
-                "sourceId": 1,
-                "title": "Quarterly Technical Milestone Achieved",
-                "description": "Demonstrated excellent leadership in resolving enterprise system integration.",
-                "feedbackType": "PRAISE",
-                "tagName": "Technical Excellence",
-                "createdAt": "2026-09-20T12:00:00Z"
-            }
-        ]
-        return ok_response({
-            "content": items,
-            "page": 0,
-            "size": 10,
-            "totalElements": len(items),
-            "totalPages": 1,
-            "last": True
-        })
+from apps.superadmin.performance_pulse import (
+    PerformancePulseView as PerformanceHistoryPulseCompatView,
+    PerformanceHistoryAllView as PerformanceHistoryAllCompatView,
+    PerformanceHistoryMeetingPulseCompatView,
+    PerformancePulseBenchmarksView,
+    PerformancePulseGoalsOverlayView,
+    PerformancePulseExportView,
+)
 
 
 # ==========================================

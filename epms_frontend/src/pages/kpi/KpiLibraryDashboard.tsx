@@ -216,7 +216,7 @@ const KpiLibraryDashboard: React.FC = () => {
                     <Pencil size={15} />
                   </button>
                   <button
-                    onClick={() => setHistoryModalState({ isOpen: true, positionId: library.positionId || 0, positionName: library.positionName || library.title })}
+                    onClick={() => setHistoryModalState({ isOpen: true, positionId: Number(library.positionId) || 0, positionName: library.positionName || library.title })}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', alignItems: 'center' }}
                     className="hover:text-[#1A56DB] transition-colors"
                     title="History">
@@ -280,7 +280,7 @@ const KpiLibraryDashboard: React.FC = () => {
                     <Pencil size={14} />
                   </button>
                   <button
-                    onClick={() => setHistoryModalState({ isOpen: true, positionId: library.positionId || 0, positionName: library.positionName || library.title })}
+                    onClick={() => setHistoryModalState({ isOpen: true, positionId: Number(library.positionId) || 0, positionName: library.positionName || library.title })}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: '#9EA3B0', display: 'flex', alignItems: 'center', borderRadius: 6 }}
                     className="hover:bg-[#EEF3FD] hover:text-[#1A56DB] transition-colors"
                     title="History">

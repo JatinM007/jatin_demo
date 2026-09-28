@@ -52,6 +52,16 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    password_change_required = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Flag indicating whether user must change their temporary password upon login."
+    )
+    password_changed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when user completed setting their permanent password."
+    )
     date_joined = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -104,4 +114,43 @@ class EmailOTP(models.Model):
     @property
     def is_expired(self):
         return timezone.now() > self.expires_at
+
+
+class PasswordResetToken(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_reset_tokens')
+    token_hash = models.CharField(max_length=64, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False, db_index=True)
+
+    class Meta:
+        verbose_name = 'Password Reset Token'
+        verbose_name_plural = 'Password Reset Tokens'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Reset Token for {self.user.email} - {'Used' if self.is_used else 'Active'}"
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+
+class RolePermission(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    role = models.CharField(max_length=20, choices=UserRole.choices, db_index=True)
+    permission_code = models.CharField(max_length=100, db_index=True)
+    description = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Role Permission'
+        verbose_name_plural = 'Role Permissions'
+        unique_together = ('role', 'permission_code')
+        ordering = ['role', 'permission_code']
+
+    def __str__(self):
+        return f"{self.role} -> {self.permission_code}"
 

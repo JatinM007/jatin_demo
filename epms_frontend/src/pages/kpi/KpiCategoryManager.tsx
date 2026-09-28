@@ -56,7 +56,7 @@ const KpiCategoryManager: React.FC = () => {
     try {
       if (editingCategory) {
         if (!editingCategory.id) throw new Error("Cannot update: Category ID is missing.");
-        await updateCategory({ id: editingCategory.id, name: name.trim() }).unwrap();
+        await updateCategory({ id: Number(editingCategory.id), name: name.trim() }).unwrap();
       } else {
         await createCategory({ name: name.trim() }).unwrap();
       }
@@ -80,7 +80,7 @@ const KpiCategoryManager: React.FC = () => {
   const handleConfirmDelete = async () => {
     if (!categoryToDelete) return;
     try {
-      await deleteCategory(categoryToDelete.id).unwrap();
+      await deleteCategory(Number(categoryToDelete.id)).unwrap();
       handleCloseDeleteModal();
     } catch (err: any) {
       console.error('Delete Category Error:', err);

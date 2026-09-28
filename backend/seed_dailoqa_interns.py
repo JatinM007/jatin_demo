@@ -109,7 +109,8 @@ INTERNS_DATA = [
 
 
 def import_dailoqa_interns():
-    print(f"🚀 Starting import of {len(INTERNS_DATA)} Dailoqa Interns...")
+    print(f"[*] Starting import of {len(INTERNS_DATA)} Dailoqa Interns...")
+
 
     # Get or create manager user to assign as default reporting manager
     manager_user = User.objects.filter(role=UserRole.MANAGER).first()
@@ -176,9 +177,11 @@ def import_dailoqa_interns():
             }
         )
 
-        # Set user's password to their first name in lowercase
+        # Set user's password to their first name in lowercase (temporary first-time credential)
         user.set_password(password)
+        user.password_change_required = True
         user.save()
+
 
         # Create or update Employee Profile
         profile, prof_created = EmployeeProfile.objects.get_or_create(
@@ -215,12 +218,13 @@ def import_dailoqa_interns():
         print(f"  [{idx}/{len(INTERNS_DATA)}] {raw_name:<35} | Email: {email:<30} | Pass: {password:<15} | Batch: {batch} ({sub_batch})")
 
     print("\n" + "=" * 80)
-    print(f"✅ Successfully processed all {len(INTERNS_DATA)} Interns!")
-    print(f"   • Newly Created: {created_count}")
-    print(f"   • Updated / Synced: {updated_count}")
-    print(f"   • Password Pattern: First Name in lowercase (e.g. 'tanvi', 'jasleen', 'ashish', 'jatin')")
-    print(f"   • Role: INTERN")
+    print(f"[OK] Successfully processed all {len(INTERNS_DATA)} Interns!")
+    print(f"   * Newly Created: {created_count}")
+    print(f"   * Updated / Synced: {updated_count}")
+    print(f"   * Password Pattern: First Name in lowercase (e.g. 'tanvi', 'jasleen', 'ashish', 'jatin')")
+    print(f"   * Role: INTERN")
     print("=" * 80 + "\n")
+
 
 
 if __name__ == '__main__':

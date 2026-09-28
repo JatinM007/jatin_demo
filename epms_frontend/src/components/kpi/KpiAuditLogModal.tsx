@@ -4,7 +4,7 @@ import { useGetGoalSetAuditTrailQuery } from '../../services/kpiApi';
 import { formatRelativeTime } from '../../utils/timeUtils';
 
 interface KpiAuditLogModalProps {
-  goalSetId: number;
+  goalSetId: number | string;
   onClose: () => void;
 }
 

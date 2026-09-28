@@ -77,6 +77,10 @@ from apps.frontend_compat.views import (
     AuditLogsExportCompatView,
     PerformanceHistoryPulseCompatView,
     PerformanceHistoryAllCompatView,
+    PerformanceHistoryMeetingPulseCompatView,
+    PerformancePulseBenchmarksView,
+    PerformancePulseGoalsOverlayView,
+    PerformancePulseExportView,
     Feedback360GenericCompatView,
 )
 
@@ -202,7 +206,11 @@ urlpatterns = [
     re_path(r'^audit-logs/?$', AuditLogsCompatView.as_view(), name='compat_audit_list'),
 
     # Performance History & Pulse
-    re_path(r'^performance-history/meeting-pulse/?$', PerformanceHistoryPulseCompatView.as_view(), name='compat_perf_meeting_pulse'),
+    re_path(r'^performance-history/meeting-pulse/?$', PerformanceHistoryMeetingPulseCompatView.as_view(), name='compat_perf_meeting_pulse'),
+    re_path(r'^performance-history/department-benchmarks/?$', PerformancePulseBenchmarksView.as_view(), name='compat_perf_benchmarks'),
+    re_path(r'^performance-history/goals-overlay/?$', PerformancePulseGoalsOverlayView.as_view(), name='compat_perf_goals_overlay'),
+    re_path(r'^performance-history/export/(?P<fmt>csv|pdf)/?$', PerformancePulseExportView.as_view(), name='compat_perf_export_fmt'),
+    re_path(r'^performance-history/export/?$', PerformancePulseExportView.as_view(), name='compat_perf_export'),
     re_path(r'^performance-history/pulse/?$', PerformanceHistoryPulseCompatView.as_view(), name='compat_perf_pulse'),
     re_path(r'^performance-history/all/raw/?$', PerformanceHistoryPulseCompatView.as_view(), name='compat_perf_all_raw'),
     re_path(r'^performance-history/all/?$', PerformanceHistoryAllCompatView.as_view(), name='compat_perf_all'),

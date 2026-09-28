@@ -29,6 +29,43 @@ class PerformanceCycle(models.Model):
         blank=True,
         related_name='created_cycles'
     )
+    goals_weight = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('40.00'),
+        help_text='Weight in percentage for Goals & Deliverables component (0-100)',
+        validators=[MinValueValidator(Decimal('0.00')), MaxValueValidator(Decimal('100.00'))]
+    )
+    manager_weight = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('40.00'),
+        help_text='Weight in percentage for Mentor/Manager Evaluation component (0-100)',
+        validators=[MinValueValidator(Decimal('0.00')), MaxValueValidator(Decimal('100.00'))]
+    )
+    self_weight = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('20.00'),
+        help_text='Weight in percentage for Intern Self Assessment component (0-100)',
+        validators=[MinValueValidator(Decimal('0.00')), MaxValueValidator(Decimal('100.00'))]
+    )
+    self_assessment_deadline = models.DateField(
+        null=True,
+        blank=True,
+        help_text='Cutoff date for intern/employee self-appraisal submissions'
+    )
+    evidence_deadline = models.DateField(
+        null=True,
+        blank=True,
+        help_text='Cutoff date for deliverables and evidence submissions'
+    )
+    current_phase = models.CharField(
+        max_length=50,
+        blank=True,
+        default='Active Evaluation',
+        help_text='Current cycle milestone phase label'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -48,8 +85,16 @@ class PerformanceCycle(models.Model):
 
 class EvaluationCriterion(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=150, unique=True)
-    description = models.TextField()
+    cycle = models.ForeignKey(
+        PerformanceCycle,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='criteria',
+        help_text='Specific cycle this criterion belongs to, or null for global/cohort default'
+    )
+    name = models.CharField(max_length=150)
+    description = models.TextField(blank=True, default='')
     maximum_score = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -69,7 +114,7 @@ class EvaluationCriterion(models.Model):
     class Meta:
         verbose_name = 'Evaluation Criterion'
         verbose_name_plural = 'Evaluation Criteria'
-        ordering = ['name']
+        ordering = ['-weight', 'name']
 
     def __str__(self):
         return f"{self.name} (Weight: {self.weight}%, Max: {self.maximum_score})"
@@ -119,6 +164,31 @@ class Appraisal(models.Model):
         db_index=True
     )
     overall_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    classification = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text='Published performance classification'
+    )
+    strengths = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='List of key evaluated strengths and accomplishments'
+    )
+    areas_for_improvement = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='List of actionable recommendations and growth focus areas'
+    )
+    recommendations = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Long-form development recommendations from reviewer/mentor'
+    )
+    allow_intern_reply = models.BooleanField(
+        default=True,
+        help_text='Whether the intern can submit replies to published feedback'
+    )
     self_comments = models.TextField(blank=True, null=True)
     reviewer_comments = models.TextField(blank=True, null=True)
     final_comments = models.TextField(blank=True, null=True)

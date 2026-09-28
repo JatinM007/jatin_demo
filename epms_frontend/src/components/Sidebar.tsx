@@ -20,6 +20,8 @@ import {
   Layers,
   X,
   Repeat2,
+  Bell,
+  GraduationCap,
 } from "lucide-react";
 
 interface NavItem {
@@ -32,19 +34,23 @@ interface NavItem {
   privilegedOnly?: boolean;
   hideForPrivileged?: boolean;
   hideForAdmin?: boolean;
+  internOnly?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Executive Dashboard", to: "/dashboard", icon: LayoutDashboard },
+  { label: "Announcement Hub", to: "/superadmin/notifications", icon: Bell, adminOnly: true },
   { label: "Performance Appraisals", to: "/appraisal", icon: ClipboardCheck, end: true },
   { label: "Performance Pulse", to: "/performance-history/admin", icon: History },
   { label: "Team Pulse", to: "/performance-history/manager", icon: History, privilegedOnly: true, hideForAdmin: true },
   { label: "Continuous Feedback", to: "/continuous-feedback", icon: MessageSquare },
   { label: "1-on-1 Sync Meetings", to: "/meetings", icon: Users },
   { label: "Strategic Analytics", to: "/analytics", icon: BarChart3 },
+  { label: "Intern Learning Portal", to: "/intern", icon: GraduationCap, internOnly: true },
 ];
 
 const ADMIN_ITEMS: NavItem[] = [
+  { label: "Role & Permission Hub", to: "/superadmin/roles-permissions", icon: ShieldCheck, adminOnly: true },
   { label: "Employees Directory", to: "/employees", icon: Users },
   { label: "Departments", to: "/departments", icon: Building2 },
   { label: "Job Levels & Bands", to: "/job-levels", icon: Zap },
@@ -70,6 +76,12 @@ const Sidebar = ({ onClose }: SidebarProps) => {
   const [tradReviewOpen, setTradReviewOpen] = useState(false);
 
   const filteredNav = NAV_ITEMS.filter((item) => {
+    if (item.adminOnly && !isAdmin) return false;
+    if (item.hrOnly && !isHR) return false;
+    if (item.privilegedOnly && !isManager && !isHR && !isAdmin) return false;
+    if (item.hideForAdmin && isAdmin) return false;
+    if (item.internOnly && (isAdmin || isHR)) return false;
+
     switch (item.label) {
       case "Performance Pulse":   return hasPermission("REPORT_VIEW_ALL") || isHR || isAdmin;
       case "Team Pulse":          return hasPermission("APPRAISAL_VIEW_TEAM") && !isAdmin && !isHR;

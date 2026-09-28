@@ -1037,7 +1037,7 @@ const FeedbackPage = () => {
   );
 };
 
-const FeedbackReplies = ({ feedbackId, authorId }: { feedbackId: number; authorId: number }) => {
+const FeedbackReplies = ({ feedbackId, authorId }: { feedbackId: number | string; authorId?: number | string }) => {
   const { user } = useAuth();
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; reply: any } | null>(null);
 
