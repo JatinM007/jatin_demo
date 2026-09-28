@@ -39,7 +39,7 @@ const Dashboard = () => {
       { label: "System health", value: "100%", icon: <BarChart3 size={15} />, color: "green" as const },
     ];
     if (isHR) return [
-      { label: "Active PIPs", value: "12", icon: <Target size={15} />, color: "blue" as const },
+      { label: "Active appraisals", value: "12", icon: <ClipboardCheck size={15} />, color: "blue" as const },
       { label: "Completion rate", value: "88%", icon: <BarChart3 size={15} />, color: "green" as const },
       { label: "Training needs", value: "5", icon: <ClipboardCheck size={15} />, color: "orange" as const },
     ];
@@ -80,18 +80,6 @@ const Dashboard = () => {
             {user.positionName} — {user.levelName}
           </p>
         </div>
-        {(isAdmin || isHR || isManager) && (
-          <button
-            onClick={() => navigate("/pip/new")}
-            className="flex items-center gap-[9px] text-white text-[13px] font-medium transition-colors self-start sm:self-auto"
-            style={{ background: "#1A56DB", borderRadius: 8, padding: "8px 14px", border: "none" }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "#1648C0"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "#1A56DB"; }}
-          >
-            <Target size={14} aria-hidden="true" />
-            New plan
-          </button>
-        )}
       </div>
 
       {/* Stat cards */}
@@ -162,7 +150,7 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 500, color: "#111827" }}>
-                    {isEmployee ? "Submit self-assessment" : isManager ? "Review team PIP" : "Audit log review"}
+                    {isEmployee ? "Submit self-assessment" : isManager ? "Review team appraisal" : "Audit log review"}
                   </p>
                   <p style={{ fontSize: 11, color: "#9EA3B0", marginTop: 1 }}>Due in 2 days</p>
                 </div>

@@ -53,9 +53,11 @@ export const FilterBar = ({
           onChange={(event) => onCycleChange(event.target.value ? Number(event.target.value) : '')}
         >
           <option value="">Select Appraisal Cycle</option>
-          {cycles?.map((cycle) => (
-            <option key={cycle.cycleId} value={cycle.cycleId}>{cycle.cycleName}</option>
-          ))}
+          {cycles?.map((cycle) => {
+            const cId = cycle.cycleId ?? (cycle as any).id;
+            const cName = cycle.cycleName ?? (cycle as any).name;
+            return <option key={cId} value={cId}>{cName}</option>;
+          })}
         </select>
       </label>
       <label style={dashboardStyles.filterControl}>
@@ -67,9 +69,11 @@ export const FilterBar = ({
           onChange={(event) => onDeptChange(event.target.value ? Number(event.target.value) : '')}
         >
           <option value="">All Departments</option>
-          {departments?.map((department) => (
-            <option key={department.id} value={department.id}>{department.departmentName}</option>
-          ))}
+          {departments?.map((department) => {
+            const dId = department.id ?? (department as any).departmentId;
+            const dName = department.departmentName ?? (department as any).name;
+            return <option key={dId} value={dId}>{dName}</option>;
+          })}
         </select>
       </label>
       <button

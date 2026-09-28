@@ -146,19 +146,6 @@ const EmployeeDashboard: React.FC = () => {
 
       {/* New Employee fields */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* PIP Warning */}
-        {data?.onPip && (
-          <div className="lg:col-span-2" style={{ background: "#FCEBEB", border: "0.5px solid #F5C2C2", borderRadius: 12, padding: "16px 18px", display: "flex", gap: 12 }}>
-            <AlertTriangle size={18} style={{ color: "#E24B4A", flexShrink: 0, marginTop: 2 }} />
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 500, color: "#791F1F" }}>Performance Improvement Plan</p>
-              <p style={{ fontSize: 12, color: "#791F1F", opacity: 0.8, marginTop: 4 }}>
-                You are currently on a Performance Improvement Plan. Review the plan details and work with your manager on the agreed objectives.
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Team Rank & Days Left */}
         <div>
           <div className="grid grid-cols-2 gap-3">

@@ -35,9 +35,9 @@ export interface CreateEmployeeRequest {
   salary?: number;
   currency?: string;
   roleId: number;
-  parentDepartmentId: number;
-  currentDepartmentId: number;
-  directManagerId?: number;
+  parentDepartmentId?: number | string;
+  currentDepartmentId?: number | string;
+  directManagerId?: number | string;
 }
 
 export interface EmployeeImportResult {

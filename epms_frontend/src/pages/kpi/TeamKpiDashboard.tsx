@@ -57,7 +57,7 @@ const TeamKpiDashboard: React.FC = () => {
   const teamMembers = useMemo(() => {
     if (!user || !employees) return [];
     let members = employees.map(emp => {
-      const goals = teamGoals.find(g => g.employeeId === emp.id);
+      const goals = teamGoals.find(g => String(g.employeeId) === String(emp.id));
       const items = goals?.items || [];
       let progress = 0;
       if (items.length > 0) {

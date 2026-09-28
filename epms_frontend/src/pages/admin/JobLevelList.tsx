@@ -2,6 +2,7 @@ import { useGetJobLevelsQuery, useCreateJobLevelMutation, useDeleteJobLevelMutat
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Can } from "../../components/Can";
+import { toast } from "react-toastify";
 
 const inputStyle: React.CSSProperties = {
   background: "#F5F6F8", border: "0.5px solid #E0E2E8", borderRadius: 8,
@@ -10,7 +11,7 @@ const inputStyle: React.CSSProperties = {
 
 const JobLevelList = () => {
   const { data: levels, isLoading, error } = useGetJobLevelsQuery();
-  const [createLevel] = useCreateJobLevelMutation();
+  const [createLevel, { isLoading: isCreating }] = useCreateJobLevelMutation();
   const [deleteLevel] = useDeleteJobLevelMutation();
   const [newLevelName, setNewLevelName] = useState("");
   const [newLevelCode, setNewLevelCode] = useState("");
@@ -18,12 +19,27 @@ const JobLevelList = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newLevelName.trim() || !newLevelCode.trim() || newLevelRank === "") return;
+    if (!newLevelName.trim() || !newLevelCode.trim() || newLevelRank === "") {
+      toast.warning("Please enter level name, code, and rank.");
+      return;
+    }
     try {
-      await createLevel({ levelName: newLevelName, levelCode: newLevelCode, levelRank: Number(newLevelRank) }).unwrap();
+      await createLevel({ levelName: newLevelName.trim(), levelCode: newLevelCode.trim(), levelRank: Number(newLevelRank) }).unwrap();
+      toast.success(`Job Level '${newLevelName}' created successfully!`);
       setNewLevelName(""); setNewLevelCode(""); setNewLevelRank(1);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to create job level", err);
+      toast.error(err?.data?.detail || "Failed to create job level.");
+    }
+  };
+
+  const handleDelete = async (id: number, name: string) => {
+    if (!window.confirm(`Are you sure you want to delete job level '${name}'?`)) return;
+    try {
+      await deleteLevel(id).unwrap();
+      toast.success("Job level deleted successfully!");
+    } catch (err: any) {
+      toast.error("Failed to delete job level.");
     }
   };
 
@@ -86,8 +102,8 @@ const JobLevelList = () => {
                   <td style={{ padding: "11px 18px", textAlign: "right" }}>
                     <Can permission="ORG_LEVEL_MANAGE">
                       <button
-                        onClick={() => deleteLevel(level.levelId)}
-                        className="inline-flex items-center gap-1 transition-colors"
+                        onClick={() => handleDelete(level.levelId, level.levelName)}
+                        className="inline-flex items-center gap-1 transition-colors cursor-pointer"
                         style={{ fontSize: 12, color: "#791F1F", background: "#FCEBEB", border: "0.5px solid #F5C2C2", borderRadius: 6, padding: "3px 8px" }}
                       >
                         <Trash2 size={12} aria-hidden="true" /> Delete

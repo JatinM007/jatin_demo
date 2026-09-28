@@ -376,7 +376,7 @@ const ReplyItem = ({
 
 const FeedbackPage = () => {
   const { user, isManager, isAdmin, isHR } = useAuth();
-  const canCreate = isManager;
+  const canCreate = isManager || isAdmin || isHR;
 
   const [perspective, setPerspective] = useState<'all' | 'received' | 'given'>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -442,26 +442,10 @@ const FeedbackPage = () => {
     emp.currentDepartmentName && user?.currentDepartmentName &&
     emp.currentDepartmentName === user?.currentDepartmentName
   ) || [];
-  // Include the logged-in user's own rank since they are excluded from the
-  // employees list (excludeSelf=true). Without this, the next person below
-  // them becomes minRankInDept and gets incorrectly filtered out.
-  const allDeptRanks = [
-    ...deptEmployees.map(emp => emp.levelRank ?? 9999),
-    user?.levelRank ?? 9999
-  ];
-  const minRankInDept = allDeptRanks.length > 0
-    ? Math.min(...allDeptRanks)
-    : 9999;
 
-  const filteredEmployees = (isAdmin || isHR)
-    ? employees
-    : employees?.filter(emp =>
-        emp.currentDepartmentName && user?.currentDepartmentName &&
-        emp.currentDepartmentName === user?.currentDepartmentName &&
-        emp.id !== user?.id &&
-        (emp.levelRank === undefined || emp.levelRank === null || emp.levelRank !== minRankInDept) &&
-        (emp.levelRank === undefined || emp.levelRank === null || user?.levelRank === undefined || user?.levelRank === null || emp.levelRank >= user.levelRank)
-      );
+  const availableEmployees = (isAdmin || isHR)
+    ? (employees && employees.length > 0 ? employees : [])
+    : (deptEmployees.length > 0 ? deptEmployees : (employees || []));
 
   const blankFeedback = { employeeId: 0, tagId: "" as number | "", feedbackType: FeedbackType.PRAISE, description: "" };
   const [showModal, setShowModal] = useState(false);
@@ -480,7 +464,7 @@ const FeedbackPage = () => {
 
   });
 
-  const selectedEmp = employees?.find(e => e.id === newFeedback.employeeId);
+  const selectedEmp = employees?.find(e => String(e.id) === String(newFeedback.employeeId));
 
   const handleCreate = async (e: React.FormEvent, status?: ContinuousStatus) => {
     if (e) e.preventDefault();
@@ -502,8 +486,10 @@ const FeedbackPage = () => {
 
       if (editingId) {
         await updateFeedback({ id: editingId, body }).unwrap();
+        toast.success("Feedback updated successfully!");
       } else {
         await createFeedback(body).unwrap();
+        toast.success("Feedback saved successfully!");
       }
 
       setShowModal(false);
@@ -520,9 +506,11 @@ const FeedbackPage = () => {
     try {
       if (editingTagId) {
         await updateFeedbackTag({ id: editingTagId, body: { tagName: newTagName } }).unwrap();
+        toast.success("Tag updated successfully!");
       } else {
         const response = await createFeedbackTag({ tagName: newTagName }).unwrap();
         setNewFeedback({ ...newFeedback, tagId: response.tagId });
+        toast.success("Tag created successfully!");
       }
       setIsAddingTag(false); setEditingTagId(null); setNewTagName("");
     } catch (err: any) { toast.error("Failed to save tag."); }
@@ -534,6 +522,7 @@ const FeedbackPage = () => {
       await deleteFeedbackTag(tagToDelete).unwrap();
       if (newFeedback.tagId === tagToDelete) setNewFeedback({ ...newFeedback, tagId: "" });
       setTagToDelete(null);
+      toast.success("Tag deleted successfully!");
     } catch (err: any) { toast.error("Failed to delete tag."); }
   };
 
@@ -542,13 +531,14 @@ const FeedbackPage = () => {
     try {
       await deleteFeedback(feedbackToDelete).unwrap();
       setFeedbackToDelete(null);
+      toast.success("Feedback deleted successfully!");
     } catch (err: any) { toast.error("Failed to delete feedback."); }
   };
 
   const handleEdit = (fb: any) => {
     setEditingId(fb.feedbackId);
-    const emp = employees?.find(e => e.id === fb.employeeId);
-    setEditingEmployee({ id: fb.employeeId, name: emp?.staffName || fb.employeeName || 'Unknown' });
+    const emp = employees?.find(e => String(e.id) === String(fb.employeeId));
+    setEditingEmployee({ id: fb.employeeId, name: emp?.staffName || fb.employeeName || 'Staff Member' });
     setNewFeedback({
       employeeId: fb.employeeId,
       tagId: fb.tag?.tagId || 0,
@@ -584,10 +574,10 @@ const FeedbackPage = () => {
     </div>
   );
 
-  const totalItems = feedbackResponse?.totalElements || 0;
-  const totalPages = feedbackResponse?.totalPages || 0;
+  const totalItems = feedbackResponse?.totalElements || feedbacks.length;
+  const totalPages = feedbackResponse?.totalPages || Math.ceil(totalItems / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + feedbacks.length;
+  const endIndex = Math.min(startIndex + feedbacks.length, totalItems);
 
   const publishedFeedbacks = feedbacks?.filter(f => f.status === ContinuousStatus.PUBLISHED) || [];
   const stats = {
@@ -607,7 +597,7 @@ const FeedbackPage = () => {
       <div className="office-panel" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', letterSpacing: '-0.3px' }}>Continuous Feedback</h1>
-          <p style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>Real-time performance insights and team recognition.</p>
+          <p style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>Real-time performance insights, peer recognition, and continuous coaching.</p>
         </div>
         {canCreate && (
           <button onClick={() => setShowModal(true)} className="office-button-primary">
@@ -617,60 +607,58 @@ const FeedbackPage = () => {
         )}
       </div>
 
-      {isManager && (
-        <div className="space-y-3">
-          {/* Perspective selector tabs */}
-          <div className="bg-slate-100 border border-slate-200 rounded-2xl p-1.5 flex gap-2 w-fit shadow-inner">
-            <button
-              type="button"
-              onClick={() => { setPerspective('all'); setFilterStatus(undefined); setCurrentPage(1); }}
-              className={`px-5 py-2.5 rounded-xl text-[12px] font-bold transition-all duration-300 ${
-                perspective === 'all'
-                  ? 'bg-[#6366F1] text-white shadow-md shadow-indigo-100'
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50'
-              }`}
-            >
-              All Feedback
-            </button>
-            <button
-              type="button"
-              onClick={() => { setPerspective('received'); setFilterStatus(undefined); setCurrentPage(1); }}
-              className={`px-5 py-2.5 rounded-xl text-[12px] font-bold transition-all duration-300 ${
-                perspective === 'received'
-                  ? 'bg-[#6366F1] text-white shadow-md shadow-indigo-100'
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50'
-              }`}
-            >
-              Feedback Received
-            </button>
-            <button
-              type="button"
-              onClick={() => { setPerspective('given'); setFilterStatus(undefined); setCurrentPage(1); }}
-              className={`px-5 py-2.5 rounded-xl text-[12px] font-bold transition-all duration-300 ${
-                perspective === 'given'
-                  ? 'bg-[#6366F1] text-white shadow-md shadow-indigo-100'
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50'
-              }`}
-            >
-              Feedback Given
-            </button>
-          </div>
-
-          {/* Draft/Published filter (only applicable for given or all) */}
-          {perspective !== 'received' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {([{ label: 'All Statuses', value: undefined }, { label: 'Published Only', value: ContinuousStatus.PUBLISHED }, { label: 'Drafts Only', value: ContinuousStatus.DRAFT }] as const).map(({ label, value }) => (
-                <button key={label} type="button"
-                  onClick={() => { setFilterStatus(value as string | undefined); setCurrentPage(1); }}
-                  className="office-pill-filter"
-                  style={{ background: filterStatus === value ? '#4F46E5' : '#F1F5F9', color: filterStatus === value ? '#FFFFFF' : '#475569', border: filterStatus === value ? '1px solid #4F46E5' : '1px solid #E2E8F0' }}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
+      <div className="space-y-3">
+        {/* Perspective selector tabs */}
+        <div className="bg-slate-100 border border-slate-200 rounded-2xl p-1.5 flex gap-2 w-fit shadow-inner">
+          <button
+            type="button"
+            onClick={() => { setPerspective('all'); setFilterStatus(undefined); setCurrentPage(1); }}
+            className={`px-5 py-2.5 rounded-xl text-[12px] font-bold transition-all duration-300 ${
+              perspective === 'all'
+                ? 'bg-[#6366F1] text-white shadow-md shadow-indigo-100'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50'
+            }`}
+          >
+            All Feedback
+          </button>
+          <button
+            type="button"
+            onClick={() => { setPerspective('received'); setFilterStatus(undefined); setCurrentPage(1); }}
+            className={`px-5 py-2.5 rounded-xl text-[12px] font-bold transition-all duration-300 ${
+              perspective === 'received'
+                ? 'bg-[#6366F1] text-white shadow-md shadow-indigo-100'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50'
+            }`}
+          >
+            Feedback Received
+          </button>
+          <button
+            type="button"
+            onClick={() => { setPerspective('given'); setFilterStatus(undefined); setCurrentPage(1); }}
+            className={`px-5 py-2.5 rounded-xl text-[12px] font-bold transition-all duration-300 ${
+              perspective === 'given'
+                ? 'bg-[#6366F1] text-white shadow-md shadow-indigo-100'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50'
+            }`}
+          >
+            Feedback Given
+          </button>
         </div>
-      )}
+
+        {/* Draft/Published filter */}
+        {perspective !== 'received' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {([{ label: 'All Statuses', value: undefined }, { label: 'Published Only', value: ContinuousStatus.PUBLISHED }, { label: 'Drafts Only', value: ContinuousStatus.DRAFT }] as const).map(({ label, value }) => (
+              <button key={label} type="button"
+                onClick={() => { setFilterStatus(value as string | undefined); setCurrentPage(1); }}
+                className="office-pill-filter"
+                style={{ background: filterStatus === value ? '#4F46E5' : '#F1F5F9', color: filterStatus === value ? '#FFFFFF' : '#475569', border: filterStatus === value ? '1px solid #4F46E5' : '1px solid #E2E8F0' }}>
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Filter Toolbar */}
       <div className="office-panel" style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
@@ -681,11 +669,11 @@ const FeedbackPage = () => {
             <option value="">All Types</option>
             <option value="PRAISE">Praise</option>
             <option value="IMPROVEMENT">Improvement</option>
-            <option value="WARNING">Warning</option>
+            <option value="WARNING">Correction</option>
           </select>
         </div>
         <div style={{ flex: '1 1 130px', minWidth: 0 }}>
-          <label style={labelStyle}>Tag</label>
+          <label style={labelStyle}>Competency Tag</label>
           <select className="office-input" value={filterTagId ?? ''}
             onChange={e => { setFilterTagId(e.target.value ? Number(e.target.value) : undefined); setCurrentPage(1); }}>
             <option value="">All Tags</option>
@@ -693,12 +681,12 @@ const FeedbackPage = () => {
           </select>
         </div>
         <div style={{ flex: '1 1 130px', minWidth: 0 }}>
-          <label style={labelStyle}>From</label>
+          <label style={labelStyle}>From Date</label>
           <input type="date" className="office-input" value={filterCreatedAfter}
             onChange={e => { setFilterCreatedAfter(e.target.value); setCurrentPage(1); }} />
         </div>
         <div style={{ flex: '1 1 130px', minWidth: 0 }}>
-          <label style={labelStyle}>To</label>
+          <label style={labelStyle}>To Date</label>
           <input type="date" className="office-input" value={filterCreatedBefore}
             onChange={e => { setFilterCreatedBefore(e.target.value); setCurrentPage(1); }} />
         </div>
@@ -715,28 +703,26 @@ const FeedbackPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Main Feed */}
         <div className="lg:col-span-2 space-y-4 order-2 lg:order-1 office-timeline-line">
-          {(isAdmin || isHR) && (
-            <div style={{ background: '#FFFBEB', border: '1px dashed #F59E0B', borderRadius: 16, padding: '32px 24px', textAlign: 'center' }}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#78350F', marginBottom: 6 }}>Access Restricted</h3>
-              <p style={{ fontSize: 12, color: '#92400E', marginBottom: 14 }}>Admins are restricted to viewing performance history only. Feedback details are hidden.</p>
-              <a href="/performance-history" className="office-button-primary" style={{ background: '#78350F', textDecoration: 'none' }}>Go to Performance History</a>
+          {feedbacks?.length === 0 && (
+            <div style={{ padding: '48px 24px', textAlign: 'center', border: '2px dashed #E2E8F0', borderRadius: 20, background: '#FFFFFF' }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#EEF2FF', color: '#6366F1', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                <svg style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </div>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', marginBottom: 4 }}>No feedback found</p>
+              <p style={{ fontSize: 12, color: '#64748B' }}>Try adjusting your search criteria or give constructive feedback to a teammate.</p>
             </div>
           )}
 
-          {!(isAdmin || isHR) && feedbacks?.length === 0 && (
-            <div style={{ padding: '48px 24px', textAlign: 'center', border: '2px dashed #E2E8F0', borderRadius: 20 }}>
-              <p style={{ fontSize: 13, color: '#64748B' }}>No feedback entries yet.</p>
-            </div>
-          )}
-
-          {!(isAdmin || isHR) && feedbacks?.map((fb) => {
+          {feedbacks?.map((fb) => {
             const typeStyle = FEEDBACK_TYPE_STYLE[fb.feedbackType] || FEEDBACK_TYPE_STYLE[FeedbackType.PRAISE];
             return (
               <div key={fb.feedbackId} className="office-feed-card group">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ width: 38, height: 38, borderRadius: 10, background: typeStyle.bg, color: typeStyle.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0, border: `1px solid ${typeStyle.border}`, boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
-                      {fb.managerName.charAt(0)}
+                      {fb.managerName ? fb.managerName.charAt(0) : 'M'}
                     </div>
                     <div>
                       <h3 style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>
@@ -793,7 +779,7 @@ const FeedbackPage = () => {
                     </svg>
                     Replies{(fb.replyCount ?? 0) > 0 ? ` (${fb.replyCount})` : ''}
                   </button>
-                  {fb.status === ContinuousStatus.DRAFT && fb.managerId === user?.id && (
+                  {fb.status === ContinuousStatus.DRAFT && (fb.managerId === user?.id || String(fb.managerId) === String(user?.id) || isAdmin || isHR) && (
                     <button type="button" onClick={() => handlePublish(fb.feedbackId)} disabled={isPublishing}
                       className="office-button-primary"
                       style={{ padding: '6px 12px', fontSize: 11 }}>
@@ -842,14 +828,14 @@ const FeedbackPage = () => {
             </div>
             <div>
               <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 3 }}>
-                {perspective === 'received' ? 'Received Published' : perspective === 'given' ? 'Given Published' : isManager ? 'Total Published' : 'Total Received'}
+                {perspective === 'received' ? 'Received Published' : perspective === 'given' ? 'Given Published' : (isManager || isAdmin || isHR) ? 'Total Published' : 'Total Received'}
               </p>
               <p style={{ fontSize: 22, fontWeight: 800, color: '#0F172A' }}>
-                {perspective === 'received' ? (feedbackResponse?.totalElements || 0) : perspective === 'given' ? (feedbackStats?.totalPublished || 0) : isManager ? (feedbackStats?.totalPublished || 0) : totalItems}
+                {perspective === 'received' ? (feedbackResponse?.totalElements || 0) : perspective === 'given' ? (feedbackStats?.totalPublished || 0) : (isManager || isAdmin || isHR) ? (feedbackStats?.totalPublished || totalItems) : totalItems}
               </p>
             </div>
           </div>
-          {isManager && perspective !== 'received' && (
+          {(isManager || isAdmin || isHR) && perspective !== 'received' && (
             <button type="button"
               onClick={() => { setFilterStatus(ContinuousStatus.DRAFT); setCurrentPage(1); }}
               className="office-panel hover:border-[#FDE68A] transition-colors"
@@ -892,7 +878,11 @@ const FeedbackPage = () => {
                       <select required className="office-input" value={newFeedback.employeeId}
                         onChange={e => setNewFeedback({ ...newFeedback, employeeId: Number(e.target.value) })}>
                         <option value="">Choose Staff</option>
-                        {filteredEmployees?.map(emp => <option key={emp.id} value={emp.id}>{emp.staffName}</option>)}
+                        {availableEmployees?.map(emp => (
+                          <option key={emp.id} value={emp.id}>
+                            {emp.staffName} ({emp.currentDepartmentName || 'General'} - {emp.positionName || 'Member'})
+                          </option>
+                        ))}
                       </select>
                     )}
                   </div>

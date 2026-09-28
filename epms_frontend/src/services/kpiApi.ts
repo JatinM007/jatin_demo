@@ -161,7 +161,7 @@ export const kpiApi = api.injectEndpoints({
     // ==================== Goal Item Management ====================
     addGoalItem: builder.mutation<
       ApiResponse<GoalSetResponse>,
-      { goalSetId: number; data: KpiGoalItemRequest }
+      { goalSetId: number | string; data: KpiGoalItemRequest }
     >({
       query: ({ goalSetId, data }) => ({
         url: `/kpi/goal-set/${goalSetId}/items`,
@@ -173,7 +173,7 @@ export const kpiApi = api.injectEndpoints({
 
     updateGoalItem: builder.mutation<
       ApiResponse<GoalSetResponse>,
-      { itemId: number; data: KpiGoalItemRequest }
+      { itemId: number | string; data: KpiGoalItemRequest }
     >({
       query: ({ itemId, data }) => ({
         url: `/kpi/items/${itemId}`,
@@ -183,7 +183,7 @@ export const kpiApi = api.injectEndpoints({
       invalidatesTags: ['GoalSet'],
     }),
 
-    deleteGoalItem: builder.mutation<ApiResponse<GoalSetResponse>, number>({
+    deleteGoalItem: builder.mutation<ApiResponse<GoalSetResponse>, number | string>({
       query: (itemId) => ({
         url: `/kpi/items/${itemId}`,
         method: 'DELETE',
@@ -193,7 +193,7 @@ export const kpiApi = api.injectEndpoints({
 
     bulkUpdateGoalItems: builder.mutation<
       ApiResponse<GoalSetResponse>,
-      { goalSetId: number; data: KpiGoalBulkUpdateRequest }
+      { goalSetId: number | string; data: KpiGoalBulkUpdateRequest }
     >({
       query: ({ goalSetId, data }) => ({
         url: `/kpi/goal-set/${goalSetId}/bulk-items`,
@@ -204,7 +204,7 @@ export const kpiApi = api.injectEndpoints({
     }),
 
     // ==================== Approval ====================
-    approveGoalSet: builder.mutation<ApiResponse<GoalSetResponse>, number>({
+    approveGoalSet: builder.mutation<ApiResponse<GoalSetResponse>, number | string>({
       query: (id) => ({
         url: `/kpi/approve/${id}`,
         method: 'POST',
@@ -212,7 +212,7 @@ export const kpiApi = api.injectEndpoints({
       invalidatesTags: ['GoalSet'],
     }),
 
-    revertGoalSet: builder.mutation<ApiResponse<GoalSetResponse>, number>({
+    revertGoalSet: builder.mutation<ApiResponse<GoalSetResponse>, number | string>({
       query: (id) => ({
         url: `/kpi/goal-set/${id}/revert`,
         method: 'POST',
@@ -220,7 +220,7 @@ export const kpiApi = api.injectEndpoints({
       invalidatesTags: ['GoalSet'],
     }),
 
-    lockGoalSet: builder.mutation<ApiResponse<GoalSetResponse>, number>({
+    lockGoalSet: builder.mutation<ApiResponse<GoalSetResponse>, number | string>({
       query: (id) => ({
         url: `/kpi/goal-set/${id}/lock`,
         method: 'POST',
@@ -238,7 +238,7 @@ export const kpiApi = api.injectEndpoints({
       invalidatesTags: ['GoalSet', 'Progress'],
     }),
 
-    getProgressHistory: builder.query<ApiResponse<KpiProgressHistory[]>, { employeeId: number; limit?: number }>({
+    getProgressHistory: builder.query<ApiResponse<KpiProgressHistory[]>, { employeeId: number | string; limit?: number }>({
       query: ({ employeeId, limit = 10 }) => `/kpi/progress/history?employeeId=${employeeId}&limit=${limit}`,
       providesTags: ['Progress'],
     }),
@@ -246,7 +246,7 @@ export const kpiApi = api.injectEndpoints({
     // ==================== Revision ====================
     reviseKpi: builder.mutation<
       ApiResponse<GoalSetResponse>,
-      { itemId: number; data: KpiRevisionRequest }
+      { itemId: number | string; data: KpiRevisionRequest }
     >({
       query: ({ itemId, data }) => ({
         url: `/kpi/revise/${itemId}`,
@@ -257,7 +257,7 @@ export const kpiApi = api.injectEndpoints({
     }),
 
     // ==================== Goal Set Retrieval ====================
-    getGoalSetByEmployee: builder.query<ApiResponse<GoalSetResponse>, { employeeId: number; cycleId: number }>({
+    getGoalSetByEmployee: builder.query<ApiResponse<GoalSetResponse>, { employeeId: number | string; cycleId: number | string }>({
       query: ({ employeeId, cycleId }) => ({
         url: `/kpi/goal-set/employee/${employeeId}`,
         params: { cycleId },
@@ -265,7 +265,7 @@ export const kpiApi = api.injectEndpoints({
       providesTags: ['GoalSet'],
     }),
 
-    getGoalSetById: builder.query<ApiResponse<GoalSetResponse>, number>({
+    getGoalSetById: builder.query<ApiResponse<GoalSetResponse>, number | string>({
       query: (id) => `/kpi/goal-set/${id}`,
       providesTags: ['GoalSet'],
     }),
@@ -279,7 +279,7 @@ export const kpiApi = api.injectEndpoints({
     // ==================== Score Calculation ====================
     calculateScores: builder.mutation<
       ApiResponse<KpiScoreResponse>,
-      { employeeId: number; cycleId: number }
+      { employeeId: number | string; cycleId: number | string }
     >({
       query: ({ employeeId, cycleId }) => ({
         url: `/kpi/calculate-score?employeeId=${employeeId}&cycleId=${cycleId}`,
@@ -287,16 +287,20 @@ export const kpiApi = api.injectEndpoints({
       }),
       invalidatesTags: ['FinalScore', 'GoalSet'],
     }),
-    getFinalScore: builder.query<ApiResponse<KpiScoreResponse>, { employeeId: number; cycleId: number }>({
+    getFinalScore: builder.query<ApiResponse<KpiScoreResponse>, { employeeId: number | string; cycleId: number | string }>({
       query: ({ employeeId, cycleId }) =>
         `/kpi/calculate-score?employeeId=${employeeId}&cycleId=${cycleId}`,
       providesTags: ['FinalScore'],
     }),
-    getTeamGoalSets: builder.query<ApiResponse<GoalSetResponse[]>, { managerId: number; cycleId: number }>({
-      query: ({ managerId, cycleId }) => `/kpi/goal-set/team?managerId=${managerId}&cycleId=${cycleId}`,
+    getTeamGoalSets: builder.query<ApiResponse<GoalSetResponse[]>, { managerId?: number | string; cycleId: number | string }>({
+      query: ({ managerId, cycleId }) => {
+        let url = `/kpi/goal-set/team?cycleId=${cycleId}`;
+        if (managerId) url += `&managerId=${managerId}`;
+        return url;
+      },
       providesTags: ['GoalSet'],
     }),
-    getDepartmentGoalSets: builder.query<ApiResponse<GoalSetResponse[]>, { departmentId?: number; cycleId: number }>({
+    getDepartmentGoalSets: builder.query<ApiResponse<GoalSetResponse[]>, { departmentId?: number | string; cycleId: number | string }>({
       query: ({ departmentId, cycleId }) => {
         let url = `/kpi/goal-set/department?cycleId=${cycleId}`;
         if (departmentId) url += `&departmentId=${departmentId}`;
@@ -304,25 +308,25 @@ export const kpiApi = api.injectEndpoints({
       },
       providesTags: ['GoalSet'],
     }),
-    getEmployeeKpiHistory: builder.query<ApiResponse<GoalSetResponse[]>, number>({
+    getEmployeeKpiHistory: builder.query<ApiResponse<GoalSetResponse[]>, number | string>({
       query: (employeeId) => `/kpi-history/employee/${employeeId}`,
       providesTags: ['GoalSet'],
     }),
-    getGoalSetAuditTrail: builder.query<ApiResponse<KpiHistoryLog[]>, number>({
+    getGoalSetAuditTrail: builder.query<ApiResponse<KpiHistoryLog[]>, number | string>({
       query: (goalSetId) => `/kpi-history/goal-set/${goalSetId}/audit`,
-      providesTags: (result, error, goalSetId) => [{ type: 'AuditTrail' as const, id: goalSetId }],
+      providesTags: (_result, _error, goalSetId) => [{ type: 'AuditTrail' as const, id: goalSetId }],
     }),
     getKpiSummaryReport: builder.query<
       ApiResponse<KpiSummaryReportDTO>,
-      { employeeId: number; cycleIds: number[] }
+      { employeeId?: number | string; cycleIds: (number | string)[] }
     >({
       query: ({ employeeId, cycleIds }) =>
-        `/reports/kpi-summary?employeeId=${employeeId}&cycleIds=${cycleIds.join(',')}`,
+        `/reports/kpi-summary?employeeId=${employeeId || ''}&cycleIds=${cycleIds.join(',')}`,
       providesTags: ['GoalSet'],
     }),
     getKpiActualsCompletionReport: builder.query<
       ApiResponse<KpiActualsCompletionReportDTO>,
-      { cycleId: number; managerId?: number; departmentId?: number; thresholdDays?: number }
+      { cycleId: number | string; managerId?: number | string; departmentId?: number | string; thresholdDays?: number }
     >({
       query: ({ cycleId, managerId, departmentId, thresholdDays = 30 }) => ({
         url: `/reports/kpi-actuals-completion`,

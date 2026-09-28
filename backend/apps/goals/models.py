@@ -146,3 +146,242 @@ class GoalProgress(models.Model):
 
     def __str__(self):
         return f"{self.goal.title}: {self.progress_percentage}% ({self.created_at.strftime('%Y-%m-%d')})"
+
+
+class KpiCategory(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'KPI Category'
+        verbose_name_plural = 'KPI Categories'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class KpiLibrary(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    position = models.ForeignKey(
+        'organization.Position',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='kpi_libraries'
+    )
+    target_level = models.ForeignKey(
+        'organization.JobLevel',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='kpi_libraries'
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'KPI Library'
+        verbose_name_plural = 'KPI Libraries'
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return self.title
+
+
+class KpiLibraryDetail(models.Model):
+    library = models.ForeignKey(
+        KpiLibrary,
+        on_delete=models.CASCADE,
+        related_name='details'
+    )
+    category = models.ForeignKey(
+        KpiCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='library_details'
+    )
+    goal_title = models.CharField(max_length=255)
+    unit = models.CharField(max_length=50, default='%')
+    target_value = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('100.00'))
+    weight_percent = models.IntegerField(default=20)
+    is_compliance = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = 'KPI Library Detail'
+        verbose_name_plural = 'KPI Library Details'
+
+    def __str__(self):
+        return f"{self.goal_title} ({self.weight_percent}%)"
+
+
+class GoalSet(models.Model):
+    STATUS_CHOICES = (
+        ('DRAFT', 'Draft'),
+        ('APPROVED', 'Approved'),
+        ('LOCKED', 'Locked'),
+        ('SCORED', 'Scored'),
+        ('ARCHIVED', 'Archived'),
+    )
+    employee = models.ForeignKey(
+        'employees.EmployeeProfile',
+        on_delete=models.CASCADE,
+        related_name='goal_sets'
+    )
+    cycle = models.ForeignKey(
+        'performance.PerformanceCycle',
+        on_delete=models.CASCADE,
+        related_name='goal_sets'
+    )
+    assigned_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_goal_sets'
+    )
+    library = models.ForeignKey(
+        KpiLibrary,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_sets'
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT')
+    version = models.IntegerField(default=1)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    locked_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Goal Set'
+        verbose_name_plural = 'Goal Sets'
+        unique_together = ('employee', 'cycle')
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.cycle.name} [{self.status}]"
+
+    @property
+    def score(self):
+        items = list(self.items.all())
+        total_w = sum(i.weight_percent for i in items)
+        if total_w == 0:
+            return 0.0
+        w_sum = sum((float(i.current_progress) / max(1.0, float(i.target_value))) * float(i.weight_percent) for i in items)
+        return round((w_sum / total_w) * 100.0, 1)
+
+
+class GoalItem(models.Model):
+    STATUS_CHOICES = (
+        ('NOT_STARTED', 'Not Started'),
+        ('IN_PROGRESS', 'In Progress'),
+        ('COMPLETED', 'Completed'),
+    )
+    goal_set = models.ForeignKey(
+        GoalSet,
+        on_delete=models.CASCADE,
+        related_name='items'
+    )
+    category = models.ForeignKey(
+        KpiCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='goal_items'
+    )
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    unit = models.CharField(max_length=50, default='%')
+    target_value = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('100.00'))
+    current_progress = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    weight_percent = models.IntegerField(default=20)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='NOT_STARTED')
+    is_compliance = models.BooleanField(default=False)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='verified_goal_items'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Goal Item'
+        verbose_name_plural = 'Goal Items'
+
+    def __str__(self):
+        return f"{self.title} ({self.current_progress}/{self.target_value} {self.unit})"
+
+    @property
+    def score_percent(self):
+        if self.target_value and self.target_value > 0:
+            pct = (self.current_progress / self.target_value) * Decimal('100.00')
+            return min(Decimal('100.00'), max(Decimal('0.00'), round(pct, 2)))
+        return Decimal('0.00')
+
+    @property
+    def weighted_score(self):
+        return round((self.score_percent * Decimal(self.weight_percent)) / Decimal('100.00'), 2)
+
+
+class KpiProgressEntry(models.Model):
+    goal_item = models.ForeignKey(
+        GoalItem,
+        on_delete=models.CASCADE,
+        related_name='progress_entries'
+    )
+    actual_value = models.DecimalField(max_digits=12, decimal_places=2)
+    progress_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    evidence_note = models.TextField(blank=True, null=True)
+    logged_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'KPI Progress Entry'
+        verbose_name_plural = 'KPI Progress Entries'
+        ordering = ['-created_at']
+
+
+class KpiAuditTrail(models.Model):
+    employee = models.ForeignKey(
+        'employees.EmployeeProfile',
+        on_delete=models.CASCADE,
+        related_name='kpi_audits'
+    )
+    goal_set = models.ForeignKey(
+        GoalSet,
+        on_delete=models.CASCADE,
+        related_name='audit_logs',
+        null=True,
+        blank=True
+    )
+    action = models.CharField(max_length=100)
+    change_reason = models.TextField(blank=True, null=True)
+    change_details = models.TextField(blank=True, null=True)
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'KPI Audit Trail'
+        verbose_name_plural = 'KPI Audit Trails'
+        ordering = ['-created_at']
+

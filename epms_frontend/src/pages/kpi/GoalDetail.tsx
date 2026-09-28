@@ -37,7 +37,7 @@ const GoalDetail: React.FC = () => {
   const effectiveCycleId = cycleIdParam ? Number(cycleIdParam) : activeCycleId ? Number(activeCycleId) : undefined;
 
   const { data: goalSetResponse, isLoading, error, refetch } = useGetGoalSetByEmployeeQuery(
-    { employeeId: parseInt(employeeId!), cycleId: effectiveCycleId! },
+    { employeeId: employeeId!, cycleId: effectiveCycleId! },
     {
       skip: !user?.id || !effectiveCycleId,
       refetchOnMountOrArgChange: true,
@@ -51,7 +51,7 @@ const GoalDetail: React.FC = () => {
   const items = goalSet?.items || [];
 
   const { data: finalScoreResponse } = useGetFinalScoreQuery(
-    { employeeId: parseInt(employeeId!), cycleId: effectiveCycleId! },
+    { employeeId: employeeId!, cycleId: effectiveCycleId! },
     { skip: !goalSet || !effectiveCycleId }
   );
   const finalScore = finalScoreResponse?.data ?? null;
@@ -78,7 +78,7 @@ const GoalDetail: React.FC = () => {
   const [showAssignmentWorkspaceButton, setShowAssignmentWorkspaceButton] = useState(false);
 
   const { data: midcycleResponse, refetch: refetchMidcycle } = useGetMidcycleSummaryQuery(
-    { employeeId: parseInt(employeeId!), cycleId: effectiveCycleId! },
+    { employeeId: employeeId as any, cycleId: effectiveCycleId as any },
     {
       skip: !effectiveCycleId,
       refetchOnMountOrArgChange: true,
@@ -87,7 +87,7 @@ const GoalDetail: React.FC = () => {
   );
   const midcycle = midcycleResponse?.data ?? null;
 
-  const isOwner = user?.id === parseInt(employeeId!);
+  const isOwner = String(user?.id) === String(employeeId);
   const isPrivileged = _isManager || isAdmin || isHR;
 
   const handleApprove = async () => {
@@ -665,7 +665,7 @@ const GoalDetail: React.FC = () => {
 
       {showMidcycleModal && goalSet && cycleData && (
         <MidcycleChangeModal
-          employeeId={parseInt(employeeId!)}
+          employeeId={employeeId as any}
           employeeName={goalSet.employeeName}
           cycleId={effectiveCycleId!}
           cycleName={goalSet.appraisalCycleName || cycleData.cycleName}

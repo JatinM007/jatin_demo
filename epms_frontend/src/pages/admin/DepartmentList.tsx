@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Plus, Trash2, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Can } from "../../components/Can";
+import { toast } from "react-toastify";
 
 const inputStyle: React.CSSProperties = {
   background: "#F5F6F8", border: "0.5px solid #E0E2E8", borderRadius: 8,
@@ -11,20 +12,35 @@ const inputStyle: React.CSSProperties = {
 
 const DepartmentList = () => {
   const { data: departments, isLoading, error } = useGetDepartmentsQuery();
-  const [createDepartment] = useCreateDepartmentMutation();
+  const [createDepartment, { isLoading: isCreating }] = useCreateDepartmentMutation();
   const [deleteDepartment] = useDeleteDepartmentMutation();
   const [newDeptName, setNewDeptName] = useState("");
   const [newDeptCode, setNewDeptCode] = useState("");
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newDeptName.trim() || !newDeptCode.trim()) return;
+    if (!newDeptName.trim() || !newDeptCode.trim()) {
+      toast.warning("Please enter both department code and name.");
+      return;
+    }
     try {
-      await createDepartment({ departmentName: newDeptName, departmentCode: newDeptCode }).unwrap();
+      await createDepartment({ departmentName: newDeptName.trim(), departmentCode: newDeptCode.trim() }).unwrap();
+      toast.success(`Department '${newDeptName}' created successfully!`);
       setNewDeptName("");
       setNewDeptCode("");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to create department", err);
+      toast.error(err?.data?.detail || "Failed to create department.");
+    }
+  };
+
+  const handleDelete = async (id: number | string, name: string) => {
+    if (!window.confirm(`Are you sure you want to delete department '${name}'?`)) return;
+    try {
+      await deleteDepartment(id as any).unwrap();
+      toast.success("Department deleted successfully!");
+    } catch (err: any) {
+      toast.error("Failed to delete department.");
     }
   };
 
@@ -86,8 +102,8 @@ const DepartmentList = () => {
                       </Link>
                       <Can permission="ORG_DEPT_MANAGE">
                         <button
-                          onClick={() => deleteDepartment(dept.id)}
-                          className="inline-flex items-center gap-1 transition-colors"
+                          onClick={() => handleDelete(dept.id, dept.departmentName)}
+                          className="inline-flex items-center gap-1 transition-colors cursor-pointer"
                           style={{ fontSize: 12, color: "#791F1F", background: "#FCEBEB", border: "0.5px solid #F5C2C2", borderRadius: 6, padding: "3px 8px" }}
                         >
                           <Trash2 size={12} aria-hidden="true" /> Delete

@@ -38,10 +38,6 @@ import {
   useGetScoreBreakdownQuery,
 } from "../../features/appraisal/appraisalApi";
 import { useGetGoalSetByEmployeeQuery } from "../../services/kpiApi";
-import { useGetPipsByEmployeeQuery } from "../../services/pipApi";
-import { useGetIdpsByEmployeeQuery } from "../../services/idpApi";
-import { PipStatus, type PipResponse } from "../../features/pip/types";
-import { IdpStatus, type IdpResponse } from "../../features/idp/idpTypes";
 import type { GoalItemResponse } from "../../features/kpi/kpiTypes";
 import ProvideFeedbackModal from "../../components/feedback/ProvideFeedbackModal";
 import ChooseKraWeightageModal from "../../components/kpi/ChooseKraWeightageModal";
@@ -212,9 +208,6 @@ const EmployeeProfileView = () => {
     () => goalSet?.kpiItems ?? goalSet?.items ?? [],
     [goalSet?.items, goalSet?.kpiItems]
   );
-
-  const { data: pipsResp } = useGetPipsByEmployeeQuery(employeeId, { skip: !employeeId });
-  const { data: idpsResp } = useGetIdpsByEmployeeQuery(employeeId, { skip: !employeeId });
 
   // Fetch Feedbacks & Stats
   const fetchFeedbacks = useCallback(async () => {

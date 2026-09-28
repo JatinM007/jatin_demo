@@ -93,27 +93,34 @@ export interface RoleLevelPermissionResponse {
 
 export interface TeamRequest {
   teamName: string;
-  departmentId: number;
+  departmentId: string | number;
+  managerId?: string | number;
 }
 
 export interface TeamResponse {
-  teamId: number;
+  teamId: string | number;
+  id?: string | number;
   teamName: string;
   departmentName: string;
-  departmentId: number;
+  departmentId: string | number;
+  memberCount?: number;
+  managerName?: string | null;
+  description?: string;
 }
 
 export interface TeamAssignmentRequest {
-  employeeId: number;
-  teamId: number;
-  isPrimary: boolean;
+  employeeId: string | number;
+  teamId: string | number;
+  isPrimary?: boolean;
 }
 
 export interface TeamMemberResponse {
-  employeeId: number;
+  employeeId: string | number;
   staffName: string;
+  employeeCode?: string;
   positionName: string | null;
   isPrimary: boolean;
+  joinedAt?: string;
 }
 
 export interface RoleLevelMapping {

@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck, Users, FileClock, BarChart3, Settings2, Lock } from "lucide-react";
+import { ShieldCheck, Users, Building2, BarChart3, Settings2, Lock } from "lucide-react";
 
 export const SuperAdminModule = () => {
   return (
@@ -12,7 +12,7 @@ export const SuperAdminModule = () => {
             Super Admin Control Center
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Global governance, system audit logs, user security permissions, and enterprise controls.
+            Global governance, user security permissions, and enterprise controls.
           </p>
         </div>
         <span className="bg-indigo-50 text-indigo-700 font-bold text-xs uppercase px-3 py-1 rounded-full border border-indigo-200">
@@ -27,10 +27,10 @@ export const SuperAdminModule = () => {
           <p className="text-xs text-slate-500 mt-1">Manage all 80+ employees, lock/unlock accounts, assign roles.</p>
         </Link>
 
-        <Link to="/audit-logs" className="p-5 bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 shadow-xs hover:shadow-md transition-all group">
-          <FileClock className="text-indigo-600 mb-3" size={24} />
-          <h3 className="font-semibold text-slate-900 group-hover:text-indigo-600">System Audit Trails</h3>
-          <p className="text-xs text-slate-500 mt-1">Immutable administrative action logs with IP addresses and timestamps.</p>
+        <Link to="/departments" className="p-5 bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 shadow-xs hover:shadow-md transition-all group">
+          <Building2 className="text-indigo-600 mb-3" size={24} />
+          <h3 className="font-semibold text-slate-900 group-hover:text-indigo-600">Departments & Structure</h3>
+          <p className="text-xs text-slate-500 mt-1">Manage departmental hierarchies, teams, and organizational divisions.</p>
         </Link>
 
         <Link to="/permissions/matrix" className="p-5 bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 shadow-xs hover:shadow-md transition-all group">

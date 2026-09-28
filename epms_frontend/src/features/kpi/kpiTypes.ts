@@ -7,7 +7,7 @@ export type Priority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
 // ==================== Category ====================
 export interface KpiCategory {
-  id: number;
+  id: number | string;
   name?: string;           // Depends on entity field
   categoryName?: string;   // Alternative name
 }
@@ -18,37 +18,37 @@ export interface KpiLibraryDetailRequest {
   unit?: string;
   targetValue: number;
   weightPercent: number;
-  categoryId: number;
+  categoryId: number | string;
   isCompliance?: boolean;
 }
 
 export interface KpiLibraryRequest {
   title: string;
   description?: string;
-  positionId: number;
-  targetLevelId?: number;
+  positionId: number | string;
+  targetLevelId?: number | string;
   details: KpiLibraryDetailRequest[];
 }
 
 export interface KpiLibraryDetailResponse {
-  id: number;
+  id: number | string;
   goalTitle: string;
   unit?: string;
   targetValue: number;
   weightPercent: number;
   isActive: boolean;
-  categoryId?: number;
+  categoryId?: number | string;
   categoryName?: string;
   isCompliance?: boolean;
 }
 
 export interface KpiLibraryResponse {
-  id: number;
+  id: number | string;
   title: string;
   description?: string;
-  positionId?: number;
+  positionId?: number | string;
   positionName: string;
-  targetLevelId?: number;
+  targetLevelId?: number | string;
   levelName?: string;
   isActive: boolean;
   updatedAt?: string;
@@ -64,21 +64,21 @@ export interface KpiImportResult {
 
 // ==================== Goal Assignment ====================
 export interface GoalAssignmentRequest {
-  employeeId: number;
-  libraryId?: number;
-  appraisalCycleId: number;
+  employeeId: number | string;
+  libraryId?: number | string;
+  appraisalCycleId: number | string;
   overwriteExisting?: boolean;
 }
 
 export interface BulkGoalAssignmentRequest {
-  employeeIds: number[];
-  libraryId: number;
-  appraisalCycleId: number;
+  employeeIds: (number | string)[];
+  libraryId: number | string;
+  appraisalCycleId: number | string;
   overwriteExisting?: boolean;
 }
 
 export interface AssignmentResult {
-  employeeId: number;
+  employeeId: number | string;
   employeeName: string;
   status: 'SUCCESS' | 'FAILED' | 'SKIPPED';
   reason: string;
@@ -98,12 +98,12 @@ export interface KpiGoalItemRequest {
   unit: string;
   targetValue: number;
   weightPercent: number;
-  categoryId: number;
+  categoryId: number | string;
   isCompliance?: boolean;
 }
 
 export interface GoalItemResponse {
-  id: number;
+  id: number | string;
   title: string;
   description?: string;
   targetValue: number;
@@ -111,7 +111,7 @@ export interface GoalItemResponse {
   weightPercent: number;
   status: KpiItemStatus;
   currentProgress?: number;
-  categoryId?: number;
+  categoryId?: number | string;
   categoryName?: string;
   scorePercent?: number;
   weightedScore?: number;
@@ -123,26 +123,26 @@ export interface GoalItemResponse {
 
 export interface KpiGoalBulkUpdateRequest {
   items: {
-    id: number;
+    id: number | string;
     title: string;
     unit: string;
     targetValue: number;
     weightPercent: number;
-    categoryId: number;
+    categoryId: number | string;
   }[];
 }
 
 // ==================== Goal Set ====================
 export interface GoalSetResponse {
-  id: number;
-  employeeId: number;
+  id: number | string;
+  employeeId: number | string;
   employeeName: string;
-  managerId: number;
-  managerName: string;
-  assignedBy?: number;
+  managerId?: number | string;
+  managerName?: string;
+  assignedBy?: number | string;
   assignedByName?: string;
   assignedAt?: string;
-  appraisalCycleId: number;
+  appraisalCycleId: number | string;
   appraisalCycleName?: string;
   status: KpiGoalStatus;
   version?: number;
@@ -157,15 +157,15 @@ export interface GoalSetResponse {
 
 // ==================== Progress ====================
 export interface ProgressRequest {
-  goalItemId: number;
+  goalItemId: number | string;
   actualValue: number;
   progressPercent: number;
   evidenceNote?: string;
 }
 
 export interface KpiProgressHistory {
-  id: number;
-  goalItemId: number;
+  id: number | string;
+  goalItemId: number | string;
   goalTitle: string;
   actualValue: number;
   progressPercent: number;
@@ -181,10 +181,10 @@ export interface KpiRevisionRequest {
 
 // ==================== Score ====================
 export interface KpiScoreResponse {
-  id: number;
-  employeeId: number;
+  id: number | string;
+  employeeId: number | string;
   employeeName: string;
-  cycleId: number;
+  cycleId: number | string;
   totalAchievementPercent?: number;
   weightedScore: number;
   calculatedAt: string;
@@ -192,10 +192,10 @@ export interface KpiScoreResponse {
 
 // ==================== History Log ====================
 export interface KpiHistoryLog {
-  id: number;
-  employeeId: number;
-  oldVersionId: number;
-  newVersionId: number;
+  id: number | string;
+  employeeId: number | string;
+  oldVersionId?: number | string;
+  newVersionId?: number | string;
   action: string;
   changeReason: string;
   changeDetails?: string;

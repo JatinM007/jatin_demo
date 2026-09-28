@@ -42,9 +42,9 @@ const GoalAssignmentWorkspace: React.FC = () => {
     return activeOrFirst ? (activeOrFirst.cycleId || activeOrFirst.id) : undefined;
   }, [urlCycleId, activeCycleId, cycles]);
 
-  const { data: employee } = useGetEmployeeByIdQuery(Number(employeeId), { skip: !employeeId });
+  const { data: employee } = useGetEmployeeByIdQuery(employeeId as any, { skip: !employeeId });
   const { data: goalSetResponse, refetch: refetchGoals } = useGetGoalSetByEmployeeQuery({
-    employeeId: Number(employeeId),
+    employeeId: employeeId as any,
     cycleId: resolvedCycleId!
   }, { skip: !employeeId || !resolvedCycleId });
 
@@ -154,10 +154,10 @@ const GoalAssignmentWorkspace: React.FC = () => {
     try {
       const overwrite = assignmentMode === 'replace';
       if (!goalSet || overwrite) {
-        await assignLibrary({ employeeId: Number(employeeId), libraryId: library.id, appraisalCycleId: resolvedCycleId, overwriteExisting: overwrite }).unwrap();
+        await assignLibrary({ employeeId: employeeId as any, libraryId: library.id, appraisalCycleId: resolvedCycleId, overwriteExisting: overwrite }).unwrap();
       } else {
         for (const detail of library.details) {
-          await addGoalItem({ goalSetId: goalSet.id, data: { title: detail.goalTitle, unit: detail.unit || 'Percent', targetValue: detail.targetValue, weightPercent: detail.weightPercent, categoryId: detail.categoryId } }).unwrap();
+          await addGoalItem({ goalSetId: goalSet.id, data: { title: detail.goalTitle, unit: detail.unit || 'Percent', targetValue: detail.targetValue, weightPercent: detail.weightPercent, categoryId: detail.categoryId || 1 } }).unwrap();
         }
       }
       refetchGoals();
@@ -205,7 +205,7 @@ const GoalAssignmentWorkspace: React.FC = () => {
           return;
         }
         const newGoalSet = await assignLibrary({
-          employeeId: Number(employeeId),
+          employeeId: employeeId as any,
           appraisalCycleId: resolvedCycleId,
         }).unwrap();
         currentGoalSetId = newGoalSet.data.id;

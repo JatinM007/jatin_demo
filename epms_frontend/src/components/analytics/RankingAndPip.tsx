@@ -1,9 +1,9 @@
 import { memo, useMemo, useState } from 'react';
-import { Award, Download, FileSpreadsheet, FileText, GraduationCap, TrendingUp } from 'lucide-react';
+import { Award, Download, FileSpreadsheet, FileText } from 'lucide-react';
 import { DashboardCard, EmptyState, SkeletonBlock } from './DashboardPrimitives';
 import { DASHBOARD_COLORS, DASHBOARD_BORDER } from '../../styles/dashboardStyles';
 import { formatScore, getTopRows, getUnderRows } from '../../utils/reportUtils';
-import type { IdpTrackingReportDTO, PerformanceRankingReportDTO, PipTrackingReportDTO, PromotionReadinessReportDTO } from '../../types/report';
+import type { PerformanceRankingReportDTO, PromotionReadinessReportDTO } from '../../types/report';
 
 const DownloadButton = ({
   label,
@@ -255,106 +255,6 @@ export const PromotionReadinessPanel = memo(({
     </DashboardCard>
   );
 });
-
-export const PipPanel = memo(({
-  data,
-  onDownloadPdf,
-  onDownloadExcel,
-}: {
-  data?: PipTrackingReportDTO;
-  onDownloadPdf: () => void;
-  onDownloadExcel: () => void;
-}) => (
-  <div style={{ background: DASHBOARD_COLORS.surface, border: DASHBOARD_BORDER, borderRadius: 8, padding: '18px 20px' }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-      <div style={{ width: 36, height: 36, borderRadius: 8, background: DASHBOARD_COLORS.primarySoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <TrendingUp size={18} color={DASHBOARD_COLORS.primary} />
-      </div>
-      <div>
-        <h4 style={{ fontSize: 13, fontWeight: 600, color: DASHBOARD_COLORS.ink }}>PIP Tracking</h4>
-        <p style={{ fontSize: 11, color: DASHBOARD_COLORS.subtle, marginTop: 1 }}>Performance Improvement Oversight</p>
-      </div>
-    </div>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
-      {[
-        { label: 'Active', value: data?.totalActivePip || 0, color: DASHBOARD_COLORS.primary },
-        { label: 'Passed', value: data?.successfulCount ?? data?.completedPip ?? 0, color: DASHBOARD_COLORS.success },
-        { label: 'Failed', value: data?.failedCount || 0, color: DASHBOARD_COLORS.danger },
-      ].map(({ label, value, color }) => (
-        <div key={label} style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: 11, color: DASHBOARD_COLORS.subtle, marginBottom: 2 }}>{label}</p>
-          <p style={{ fontSize: 22, fontWeight: 700, color }}>{value}</p>
-        </div>
-      ))}
-    </div>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-      <button
-        aria-label="Download global PIP audit PDF"
-        onClick={onDownloadPdf}
-        style={{ padding: 8, background: DASHBOARD_COLORS.primarySoft, border: `0.5px solid ${DASHBOARD_COLORS.primaryBorder}`, borderRadius: 8, color: DASHBOARD_COLORS.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-      >
-        PDF
-      </button>
-      <button
-        aria-label="Download global PIP audit Excel"
-        onClick={onDownloadExcel}
-        style={{ padding: 8, background: DASHBOARD_COLORS.surfaceAlt, border: DASHBOARD_BORDER, borderRadius: 8, color: DASHBOARD_COLORS.ink, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-      >
-        Excel
-      </button>
-    </div>
-  </div>
-));
-
-export const IdpPanel = memo(({
-  data,
-  onDownloadPdf,
-  onDownloadExcel,
-}: {
-  data?: IdpTrackingReportDTO;
-  onDownloadPdf: () => void;
-  onDownloadExcel: () => void;
-}) => (
-  <div style={{ background: DASHBOARD_COLORS.surface, border: DASHBOARD_BORDER, borderRadius: 8, padding: '18px 20px' }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-      <div style={{ width: 36, height: 36, borderRadius: 8, background: '#EAF3DE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <GraduationCap size={18} color={DASHBOARD_COLORS.success} />
-      </div>
-      <div>
-        <h4 style={{ fontSize: 13, fontWeight: 600, color: DASHBOARD_COLORS.ink }}>IDP Tracking</h4>
-        <p style={{ fontSize: 11, color: DASHBOARD_COLORS.subtle, marginTop: 1 }}>Development Plan Oversight</p>
-      </div>
-    </div>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
-      {[
-        { label: 'Active', value: data?.totalActiveIDP || 0, color: DASHBOARD_COLORS.primary },
-        { label: 'Completed', value: data?.completedIDP || 0, color: DASHBOARD_COLORS.success },
-        { label: 'Total', value: data?.idpDetails?.length || 0, color: DASHBOARD_COLORS.ink },
-      ].map(({ label, value, color }) => (
-        <div key={label} style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: 11, color: DASHBOARD_COLORS.subtle, marginBottom: 2 }}>{label}</p>
-          <p style={{ fontSize: 22, fontWeight: 700, color }}>{value}</p>
-        </div>
-      ))}
-    </div>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-      <button
-        aria-label="Download IDP tracking PDF"
-        onClick={onDownloadPdf}
-        style={{ padding: 8, background: DASHBOARD_COLORS.successSoft, border: `0.5px solid ${DASHBOARD_COLORS.successBorder}`, borderRadius: 8, color: DASHBOARD_COLORS.success, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-      >
-        PDF
-      </button>
-      <button
-        aria-label="Download IDP tracking Excel"
-        onClick={onDownloadExcel}
-        style={{ padding: 8, background: DASHBOARD_COLORS.surfaceAlt, border: DASHBOARD_BORDER, borderRadius: 8, color: DASHBOARD_COLORS.ink, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-      >
-        Excel
-      </button>
-    </div>
-  </div>
-));
 
 export const StrategicInsightCard = () => (
   <div style={{ background: DASHBOARD_COLORS.dark, borderRadius: 8, padding: '18px 20px' }}>

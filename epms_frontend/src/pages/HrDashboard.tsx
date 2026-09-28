@@ -21,7 +21,7 @@ const HrDashboard: React.FC = () => {
     { id: '1', label: 'Launch cycle', icon: <TrendingDown size={16} />, onClick: () => navigate('/hr/cycles/new'), color: 'bg-blue-100 text-blue-600' },
     { id: '2', label: 'Add employee', icon: <UserPlus size={16} />, onClick: () => navigate('/hr/employees/new'), color: 'bg-green-100 text-green-600' },
     { id: '3', label: 'Generate report', icon: <FileText size={16} />, onClick: () => navigate('/hr/reports'), color: 'bg-purple-100 text-purple-600' },
-    { id: '4', label: 'Review PIPs', icon: <AlertTriangle size={16} />, onClick: () => navigate('/hr/pips'), color: 'bg-red-100 text-red-600' },
+    { id: '4', label: 'Goal Library', icon: <CheckSquare size={16} />, onClick: () => navigate('/kpi/library'), color: 'bg-indigo-100 text-indigo-600' },
     { id: '5', label: 'Send reminder', icon: <Bell size={16} />, onClick: () => navigate('/hr/reminders'), color: 'bg-orange-100 text-orange-600' },
     { id: '6', label: 'Manage roles', icon: <Building2 size={16} />, onClick: () => navigate('/hr/roles'), color: 'bg-indigo-100 text-indigo-600' },
   ];
@@ -38,7 +38,7 @@ const HrDashboard: React.FC = () => {
         <DashboardStatCard title="Under review" value={data?.totalEmployeesUnderReview ?? 0} icon={<Users size={15} />} color="blue" />
         <DashboardStatCard title="Pending self-assessments" value={data?.pendingSelfAssessments ?? 0} icon={<ClipboardList size={15} />} color="orange" />
         <DashboardStatCard title="Manager reviews pending" value={data?.pendingManagerReviews ?? 0} icon={<CheckSquare size={15} />} color="purple" />
-        <DashboardStatCard title="Open PIPs" value={data?.openPips ?? 0} icon={<AlertTriangle size={15} />} color="red" />
+        <DashboardStatCard title="Active Departments" value={data?.departmentPerformance?.length ?? 0} icon={<Building2 size={15} />} color="green" />
       </div>
 
       {/* Charts & Progress */}
@@ -142,29 +142,7 @@ const HrDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* PIPs by department */}
-      {data?.pipByDepartment && Object.keys(data.pipByDepartment).length > 0 && (
-        <div style={{ background: "#FFFFFF", border: "0.5px solid #E4E6EC", borderRadius: 12, padding: "16px 18px" }}>
-          <p style={{ fontSize: 14, fontWeight: 500, color: "#111827", marginBottom: 12 }}>PIPs by department</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {Object.entries(data.pipByDepartment).map(([dept, summary], idx) => (
-              <div key={idx} style={{ background: "#F5F6F8", borderRadius: 8, padding: 12 }}>
-                <p style={{ fontSize: 12, color: "#5A6070", marginBottom: 8 }}>{dept}</p>
-                <div className="flex gap-3">
-                  <div>
-                    <span style={{ fontSize: 11, color: "#9EA3B0", display: "block" }}>Active</span>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: "#E24B4A" }}>{summary.active}</span>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: 11, color: "#9EA3B0", display: "block" }}>Closed</span>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: "#639922" }}>{summary.closed}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+
 
       {/* Quick actions */}
       {/* <QuickActionPanel actions={quickActions} /> */}

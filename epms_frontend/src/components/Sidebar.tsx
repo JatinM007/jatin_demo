@@ -7,7 +7,6 @@ import {
   ClipboardCheck,
   Users,
   MessageSquare,
-  TrendingUp,
   BarChart3,
   ChevronDown,
   LogOut,
@@ -21,8 +20,6 @@ import {
   Layers,
   X,
   Repeat2,
-  FileClock,
-  GraduationCap,
 } from "lucide-react";
 
 interface NavItem {
@@ -40,14 +37,11 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: "Executive Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { label: "Performance Appraisals", to: "/appraisal", icon: ClipboardCheck, end: true },
-  { label: "Performance Pulse", to: "/performance-history/admin", icon: History, adminOnly: true },
+  { label: "Performance Pulse", to: "/performance-history/admin", icon: History },
   { label: "Team Pulse", to: "/performance-history/manager", icon: History, privilegedOnly: true, hideForAdmin: true },
   { label: "Continuous Feedback", to: "/continuous-feedback", icon: MessageSquare },
   { label: "1-on-1 Sync Meetings", to: "/meetings", icon: Users },
-  { label: "PIP Recovery Plans", to: "/pip", icon: TrendingUp, end: true },
-  { label: "IDP Development Plans", to: "/idp", icon: GraduationCap, end: true },
-  { label: "Strategic Analytics", to: "/analytics", icon: BarChart3, adminOnly: true },
-  { label: "System Audit Logs", to: "/audit-logs", icon: FileClock },
+  { label: "Strategic Analytics", to: "/analytics", icon: BarChart3 },
 ];
 
 const ADMIN_ITEMS: NavItem[] = [
@@ -73,34 +67,31 @@ const Sidebar = ({ onClose }: SidebarProps) => {
   const location = useLocation();
   const [mgmtOpen, setMgmtOpen] = useState(false);
   const [perfOpen, setPerfOpen] = useState(false);
-  const [feedback360Open, setFeedback360Open] = useState(false);
+  const [tradReviewOpen, setTradReviewOpen] = useState(false);
 
   const filteredNav = NAV_ITEMS.filter((item) => {
     switch (item.label) {
-      case "Performance Pulse":   return hasPermission("REPORT_VIEW_ALL");
+      case "Performance Pulse":   return hasPermission("REPORT_VIEW_ALL") || isHR || isAdmin;
       case "Team Pulse":          return hasPermission("APPRAISAL_VIEW_TEAM") && !isAdmin && !isHR;
       case "Continuous Feedback": return true;
       case "1-on-1 Sync Meetings":return true;
-      case "PIP Recovery Plans":  return hasPermission("PIP_VIEW_OWN") || hasPermission("PIP_CREATE");
-      case "IDP Development Plans": return true;
-      case "Strategic Analytics": return hasPermission("REPORT_VIEW_ALL");
-      case "System Audit Logs":   return isAdmin || hasRole("AUDIT_VIEWER");
+      case "Strategic Analytics": return hasPermission("REPORT_VIEW_ALL") || isHR || isAdmin;
       default:                    return true;
     }
   });
 
   const perfSubItems: Array<{ to: string; label: string; end?: boolean }> = [
     { to: "/kpi", label: "KPI Intelligence Hub", end: true },
-    ...(hasPermission("KPI_VIEW_OWN") ? [{ to: "/kpi/my", label: "My Goals & KRAs" }] : []),
-    ...(hasPermission("KPI_VIEW_OWN") && user ? [{ to: `/kpi/history/${user.id}`, label: "My KPI Journey" }] : []),
-    ...(hasPermission("KPI_VIEW_TEAM") ? [{ to: "/kpi/team", label: "Team Performance" }] : []),
+    ...(hasPermission("KPI_VIEW_OWN") || isHR || isAdmin ? [{ to: "/kpi/my", label: "My Goals & KRAs" }] : []),
+    ...((hasPermission("KPI_VIEW_OWN") || isHR || isAdmin) && user ? [{ to: `/kpi/history/${user.id}`, label: "My KPI Journey" }] : []),
+    ...(hasPermission("KPI_VIEW_TEAM") || isHR || isAdmin ? [{ to: "/kpi/team", label: "Team Performance" }] : []),
     ...(isHR || isAdmin
       ? [{ to: "/kpi/org-history", label: "Org KPI History" }]
       : []),
     ...(isManager && !isHR && !isAdmin
       ? [{ to: "/kpi/org-history", label: "Team KPI History" }]
       : []),
-    ...(hasPermission("KPI_LIBRARY_MANAGE")
+    ...(hasPermission("KPI_LIBRARY_MANAGE") || isHR || isAdmin
       ? [
           { to: "/kpi/manage", label: "Goal Management" },
           { to: "/kpi/library", label: "KRA Library" },
@@ -177,28 +168,28 @@ const Sidebar = ({ onClose }: SidebarProps) => {
           </div>
         </div>
 
-        {/* 360 Feedback Accordion */}
+        {/* Traditional Review Accordion */}
         <div>
           <button
-            onClick={() => setFeedback360Open(!feedback360Open)}
+            onClick={() => setTradReviewOpen(!tradReviewOpen)}
             className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[13px] text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 transition-colors group"
           >
             <span className="flex items-center gap-2.5 font-normal">
-              <Repeat2 size={16} className="text-slate-400 group-hover:text-slate-600" />
-              360° Multi-Rater
+              <ClipboardCheck size={16} className="text-slate-400 group-hover:text-slate-600" />
+              Traditional Review
             </span>
             <ChevronDown
               size={14}
               className={`text-slate-400 transition-transform duration-200 ${
-                feedback360Open ? "rotate-180" : ""
+                tradReviewOpen ? "rotate-180" : ""
               }`}
             />
           </button>
 
-          {feedback360Open && (
+          {tradReviewOpen && (
             <div className="ml-5 pl-2.5 mt-1 border-l border-slate-200/80 space-y-0.5">
               <NavLink
-                to="/360-feedback/pending"
+                to="/appraisal"
                 className={({ isActive }) =>
                   `block px-2.5 py-1.5 rounded-lg text-[12.5px] transition-colors ${
                     isActive
@@ -207,26 +198,14 @@ const Sidebar = ({ onClose }: SidebarProps) => {
                   }`
                 }
                 onClick={handleNavClick}
+                end
               >
-                Pending 360 Reviews
+                Appraisal Dashboard
               </NavLink>
-              <NavLink
-                to="/360-feedback/my-report"
-                className={({ isActive }) =>
-                  `block px-2.5 py-1.5 rounded-lg text-[12.5px] transition-colors ${
-                    isActive
-                      ? "text-indigo-700 font-semibold bg-indigo-50/70"
-                      : "text-slate-500 hover:text-slate-900 hover:bg-slate-100/60"
-                  }`
-                }
-                onClick={handleNavClick}
-              >
-                My 360 Feedback Report
-              </NavLink>
-              {(isHR || isAdmin || isManager) && (
+              {(isHR || isAdmin) && (
                 <>
                   <NavLink
-                    to="/360-feedback/admin"
+                    to="/appraisal/design-form"
                     className={({ isActive }) =>
                       `block px-2.5 py-1.5 rounded-lg text-[12.5px] transition-colors ${
                         isActive
@@ -236,10 +215,10 @@ const Sidebar = ({ onClose }: SidebarProps) => {
                     }
                     onClick={handleNavClick}
                   >
-                    360 Cycles & Matrix
+                    Dynamic Form Builder
                   </NavLink>
                   <NavLink
-                    to="/360-feedback/calibration"
+                    to="/performance-categories"
                     className={({ isActive }) =>
                       `block px-2.5 py-1.5 rounded-lg text-[12.5px] transition-colors ${
                         isActive
@@ -249,7 +228,20 @@ const Sidebar = ({ onClose }: SidebarProps) => {
                     }
                     onClick={handleNavClick}
                   >
-                    Calibration Sessions
+                    Evaluation Criteria
+                  </NavLink>
+                  <NavLink
+                    to="/appraisal/create-cycle"
+                    className={({ isActive }) =>
+                      `block px-2.5 py-1.5 rounded-lg text-[12.5px] transition-colors ${
+                        isActive
+                          ? "text-indigo-700 font-semibold bg-indigo-50/70"
+                          : "text-slate-500 hover:text-slate-900 hover:bg-slate-100/60"
+                      }`
+                    }
+                    onClick={handleNavClick}
+                  >
+                    Release Appraisal Form
                   </NavLink>
                 </>
               )}
@@ -321,7 +313,7 @@ const Sidebar = ({ onClose }: SidebarProps) => {
 
             {mgmtOpen && (
               <div className="ml-5 pl-2.5 mt-1 border-l border-slate-200/80 space-y-0.5">
-                {ADMIN_ITEMS.map((item) => {
+                {ADMIN_ITEMS.filter((item) => !item.adminOnly || isAdmin).map((item) => {
                   const isActive = item.end
                     ? location.pathname === item.to
                     : location.pathname.startsWith(item.to);

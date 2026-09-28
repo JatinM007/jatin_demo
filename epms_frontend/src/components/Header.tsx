@@ -25,7 +25,6 @@ const PAGE_MAP: Record<string, PageInfo> = {
   "/permissions/assign":   { section: "Access Security", title: "Direct Permissions" },
   "/financial-years":      { section: "Cycles", title: "Financial Quarters" },
   "/performance-categories": { section: "Cycles", title: "Performance Categories" },
-  "/pip":                  { title: "Performance Recovery (PIP)" },
   "/analytics":            { section: "Executive Insights", title: "Strategic Analytics" },
   "/kpi":                  { section: "Objectives & KRAs", title: "KPI Intelligence Hub" },
   "/kpi/my":               { section: "Objectives & KRAs", title: "My Goals & Targets" },
@@ -36,7 +35,6 @@ const PAGE_MAP: Record<string, PageInfo> = {
   "/meetings":             { title: "1-on-1 Sync Sessions" },
   "/continuous-feedback":  { title: "Continuous Feedback Stream" },
   "/performance-history":  { title: "Performance Pulse" },
-  "/audit-logs":           { section: "Governance", title: "Enterprise Audit Logs" },
 };
 
 function resolvePageInfo(pathname: string): PageInfo {

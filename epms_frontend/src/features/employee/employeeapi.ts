@@ -29,13 +29,14 @@ export const employeeApi = api.injectEndpoints({
       providesTags: ["Employee"],
     }),
 
-    searchEmployees: builder.query<PagedResponse<EmployeeResponse>, { query?: string; departmentId?: string; teamId?: string; page: number; size: number; excludeSelf?: boolean }>({
-      query: ({ query, departmentId, teamId, page, size, excludeSelf }) => {
+    searchEmployees: builder.query<PagedResponse<EmployeeResponse>, { query?: string; departmentId?: string; teamId?: string; page: number; size: number; excludeSelf?: boolean; sortBy?: string }>({
+      query: ({ query, departmentId, teamId, page, size, excludeSelf, sortBy }) => {
         let url = `/emp/search?page=${page}&size=${size}`;
         if (query) url += `&query=${encodeURIComponent(query)}`;
         if (departmentId) url += `&departmentId=${departmentId}`;
         if (teamId) url += `&teamId=${teamId}`;
         if (excludeSelf) url += `&excludeSelf=true`;
+        if (sortBy) url += `&sortBy=${encodeURIComponent(sortBy)}`;
         return url;
       },
       transformResponse: (response: ApiResponse<PagedResponse<EmployeeResponse>>) =>
@@ -43,19 +44,19 @@ export const employeeApi = api.injectEndpoints({
       providesTags: ["Employee"],
     }),
 
-    getDirectReports: builder.query<EmployeeResponse[], number>({
+    getDirectReports: builder.query<EmployeeResponse[], number | string>({
       query: (id) => `/emp/${id}/direct-reports`,
       transformResponse: (response: ApiResponse<EmployeeResponse[]>) =>
         response.data,
     }),
 
-    getManager: builder.query<EmployeeResponse, number>({
+    getManager: builder.query<EmployeeResponse, number | string>({
       query: (id) => `/emp/${id}/manager`,
       transformResponse: (response: ApiResponse<EmployeeResponse>) =>
         response.data,
     }),
 
-    getEmployeeById: builder.query<EmployeeResponse, number>({
+    getEmployeeById: builder.query<EmployeeResponse, number | string>({
       query: (id) => `/emp/${id}`,
       transformResponse: (response: ApiResponse<EmployeeResponse>) =>
         response.data,

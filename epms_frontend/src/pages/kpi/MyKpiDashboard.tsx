@@ -28,9 +28,8 @@ const MyKpiDashboard: React.FC = () => {
   const [selectedKpi, setSelectedKpi] = useState<any>(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
+  const kpis = goalSetResponse?.data?.items || [];
   const isDraft = goalSetResponse?.data?.status === 'DRAFT';
-  const kpis = isDraft ? [] : (goalSetResponse?.data?.items || []);
-
   const canUpdate = goalSetResponse?.data?.status === 'APPROVED';
 
   const overallProgress = useMemo(() => {

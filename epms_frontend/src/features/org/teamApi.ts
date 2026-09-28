@@ -9,7 +9,7 @@ export const teamApi = api.injectEndpoints({
       transformResponse: (res: ApiResponse<TeamResponse[]>) => res.data,
       providesTags: ["Teams"],
     }),
-    createTeam: builder.mutation<number, TeamRequest>({
+    createTeam: builder.mutation<any, TeamRequest>({
       query: (body) => ({
         url: "/teams",
         method: "POST",
@@ -17,25 +17,25 @@ export const teamApi = api.injectEndpoints({
       }),
       invalidatesTags: ["Teams"],
     }),
-    assignEmployee: builder.mutation<void, TeamAssignmentRequest>({
+    assignEmployee: builder.mutation<any, TeamAssignmentRequest>({
       query: (body) => ({
         url: "/teams/assign",
         method: "POST",
         body,
       }),
-      invalidatesTags: ["TeamMembers"],
+      invalidatesTags: ["TeamMembers", "Teams"],
     }),
-    getTeamMembers: builder.query<TeamMemberResponse[], number>({
+    getTeamMembers: builder.query<TeamMemberResponse[], string | number>({
       query: (teamId) => `/teams/${teamId}/members`,
       transformResponse: (res: ApiResponse<TeamMemberResponse[]>) => res.data,
       providesTags: ["TeamMembers"],
     }),
-    getEmployeeTeams: builder.query<TeamResponse[], number>({
+    getEmployeeTeams: builder.query<TeamResponse[], string | number>({
       query: (employeeId) => `/teams/employee/${employeeId}`,
       transformResponse: (res: ApiResponse<TeamResponse[]>) => res.data,
       providesTags: ["EmployeeTeams"],
     }),
-    updateTeam: builder.mutation<void, { id: number; body: TeamRequest }>({
+    updateTeam: builder.mutation<any, { id: string | number; body: TeamRequest }>({
       query: ({ id, body }) => ({
         url: `/teams/${id}`,
         method: "PUT",
@@ -43,19 +43,19 @@ export const teamApi = api.injectEndpoints({
       }),
       invalidatesTags: ["Teams"],
     }),
-    deleteTeam: builder.mutation<void, number>({
+    deleteTeam: builder.mutation<any, string | number>({
       query: (id) => ({
         url: `/teams/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Teams"],
+      invalidatesTags: ["Teams", "TeamMembers"],
     }),
-    removeTeamMember: builder.mutation<void, { teamId: number; employeeId: number }>({
+    removeTeamMember: builder.mutation<any, { teamId: string | number; employeeId: string | number }>({
       query: ({ teamId, employeeId }) => ({
         url: `/teams/${teamId}/members/${employeeId}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["TeamMembers"],
+      invalidatesTags: ["TeamMembers", "Teams"],
     }),
   }),
 });

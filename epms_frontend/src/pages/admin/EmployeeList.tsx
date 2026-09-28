@@ -31,6 +31,9 @@ import {
   AlertCircle,
   Loader2,
   AlertTriangle,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { Can } from "../../components/Can";
 
@@ -59,6 +62,7 @@ const EmployeeList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDeptId, setSelectedDeptId] = useState<string>("");
   const [selectedTeamId, setSelectedTeamId] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("name");
   const [selectedEmp, setSelectedEmp] = useState<number | null>(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -77,6 +81,7 @@ const EmployeeList = () => {
     query: searchQuery,
     departmentId: selectedDeptId,
     teamId: selectedTeamId,
+    sortBy,
     page,
     size,
   });
@@ -278,6 +283,8 @@ const EmployeeList = () => {
                 style={{ ...selectStyle, paddingLeft: 30, width: 180 }}
               />
             </div>
+
+            {/* Department Filter */}
             <select
               value={selectedDeptId}
               onChange={(e) => {
@@ -294,6 +301,8 @@ const EmployeeList = () => {
                 </option>
               ))}
             </select>
+
+            {/* Team Filter */}
             <select
               value={selectedTeamId}
               onChange={(e) => {
@@ -310,13 +319,30 @@ const EmployeeList = () => {
                 </option>
               ))}
             </select>
+
+            {/* Sort Order Selector */}
+            <select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setPage(0);
+              }}
+              style={selectStyle}
+            >
+              <option value="name">Sort by: Name (A-Z)</option>
+              <option value="-name">Sort by: Name (Z-A)</option>
+              <option value="department">Sort by: Department (A-Z)</option>
+              <option value="-department">Sort by: Department (Z-A)</option>
+              <option value="code">Sort by: Code (Asc)</option>
+              <option value="-code">Sort by: Code (Desc)</option>
+            </select>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleDownload("pdf")}
               disabled={isDownloading}
-              className="inline-flex items-center gap-1 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
               style={{
                 fontSize: 12,
                 color: "#791F1F",
@@ -331,7 +357,7 @@ const EmployeeList = () => {
             <button
               onClick={() => handleDownload("xlsx")}
               disabled={isDownloading}
-              className="inline-flex items-center gap-1 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
               style={{
                 fontSize: 12,
                 color: "#27500A",
@@ -360,24 +386,86 @@ const EmployeeList = () => {
           <table className="w-full text-left" style={{ minWidth: 640 }}>
             <thead>
               <tr style={{ borderBottom: "0.5px solid #E4E6EC" }}>
-                {["Employee", "Department & position", "Roles", "Actions"].map(
-                  (h, i) => (
-                    <th
-                      key={h}
-                      style={{
-                        padding: "10px 18px",
-                        fontSize: 11,
-                        fontWeight: 500,
-                        color: "#9EA3B0",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                        textAlign: i === 3 ? "right" : "left",
-                      }}
-                    >
-                      {h}
-                    </th>
-                  ),
-                )}
+                <th
+                  onClick={() => {
+                    setSortBy((prev) => (prev === "name" ? "-name" : "name"));
+                    setPage(0);
+                  }}
+                  className="cursor-pointer hover:bg-slate-50 transition-colors select-none"
+                  style={{
+                    padding: "10px 18px",
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: sortBy.includes("name") ? "#1A56DB" : "#9EA3B0",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>Employee</span>
+                    {sortBy === "name" ? (
+                      <ArrowUp size={12} className="text-indigo-600" />
+                    ) : sortBy === "-name" ? (
+                      <ArrowDown size={12} className="text-indigo-600" />
+                    ) : (
+                      <ArrowUpDown size={11} className="opacity-40" />
+                    )}
+                  </div>
+                </th>
+
+                <th
+                  onClick={() => {
+                    setSortBy((prev) => (prev === "department" ? "-department" : "department"));
+                    setPage(0);
+                  }}
+                  className="cursor-pointer hover:bg-slate-50 transition-colors select-none"
+                  style={{
+                    padding: "10px 18px",
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: sortBy.includes("department") ? "#1A56DB" : "#9EA3B0",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>Department & position</span>
+                    {sortBy === "department" ? (
+                      <ArrowUp size={12} className="text-indigo-600" />
+                    ) : sortBy === "-department" ? (
+                      <ArrowDown size={12} className="text-indigo-600" />
+                    ) : (
+                      <ArrowUpDown size={11} className="opacity-40" />
+                    )}
+                  </div>
+                </th>
+
+                <th
+                  style={{
+                    padding: "10px 18px",
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: "#9EA3B0",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  Roles
+                </th>
+
+                <th
+                  style={{
+                    padding: "10px 18px",
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: "#9EA3B0",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                    textAlign: "right",
+                  }}
+                >
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>

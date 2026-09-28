@@ -58,6 +58,30 @@ export const departmentApi = api.injectEndpoints({
       query: (id) => `/departments/${id}/headcount`,
       transformResponse: (res: ApiResponse<number>) => res.data,
     }),
+
+    addDepartmentMember: builder.mutation<
+      any,
+      { departmentId: string | number; employeeId: string | number }
+    >({
+      query: ({ departmentId, employeeId }) => ({
+        url: `/departments/${departmentId}/members`,
+        method: "POST",
+        body: { employeeId, action: "add_member" },
+      }),
+      invalidatesTags: ["Department", "Employee"],
+    }),
+
+    assignDepartmentManager: builder.mutation<
+      any,
+      { departmentId: string | number; managerId: string | number }
+    >({
+      query: ({ departmentId, managerId }) => ({
+        url: `/departments/${departmentId}/members`,
+        method: "POST",
+        body: { managerId, action: "assign_manager" },
+      }),
+      invalidatesTags: ["Department", "Employee"],
+    }),
   }),
 });
 
@@ -69,4 +93,6 @@ export const {
   useCreateDepartmentMutation,
   useUpdateDepartmentMutation,
   useDeleteDepartmentMutation,
+  useAddDepartmentMemberMutation,
+  useAssignDepartmentManagerMutation,
 } = departmentApi;

@@ -1,18 +1,15 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import {
   useDownloadReportMutation,
   useGetAppraisalStatusReportQuery,
-  useGetFeedback360SummaryAnalyticsQuery,
   useGetGoalCompletionQuery,
-  useGetIdpTrackingReportQuery,
   useGetKpiAchievementReportQuery,
   useGetOrganizationPerformanceTrendQuery,
   useGetPerformanceByDepartmentQuery,
   useGetPerformanceDistributionQuery,
   useGetPerformancePotentialMatrixQuery,
   useGetPerformanceRankingReportQuery,
-  useGetPipTrackingReportQuery,
   useGetPromotionReadinessReportQuery,
   useGetTeamPerformanceBreakdownQuery,
 } from '../../features/report/reportApi';
@@ -23,7 +20,6 @@ import { QuickInsights, SelectCyclePrompt, SummaryCards } from '../../components
 import {
   AppraisalCompletionCard,
   DepartmentHeatmap,
-  Feedback360Card,
   GoalCompletionCard,
   KpiAchievementChart,
   PerformanceDistributionCard,
@@ -33,8 +29,6 @@ import {
 } from '../../components/analytics/ChartCards';
 import {
   PerformanceRankingTable,
-  IdpPanel,
-  PipPanel,
   PromotionReadinessPanel,
   StrategicInsightCard,
   UnderPerformanceRankingTable,
@@ -58,18 +52,25 @@ const AnalyticsDashboard = () => {
   const { data: cycles } = useGetCyclesQuery();
   const { data: departments } = useGetDepartmentsQuery();
 
+  useEffect(() => {
+    if (!selectedCycle && cycles && cycles.length > 0) {
+      const active = cycles.find((c: any) => c.status === 'ACTIVE' || c.isActive) || cycles[0];
+      const cId = (active as any).cycleId ?? (active as any).id;
+      if (cId !== undefined && cId !== null && cId !== '') {
+        setFilters((current) => ({ ...current, selectedCycle: Number(cId) || cId }));
+      }
+    }
+  }, [cycles, selectedCycle]);
+
   const appraisalStatusQuery = useGetAppraisalStatusReportQuery(Number(selectedCycle), { skip: !hasCycle });
   const kpiReportQuery = useGetKpiAchievementReportQuery({ cycleId: Number(selectedCycle), departmentId }, { skip: !hasCycle });
   const rankingReportQuery = useGetPerformanceRankingReportQuery(Number(selectedCycle), { skip: !hasCycle });
-  const pipReportQuery = useGetPipTrackingReportQuery();
-  const idpReportQuery = useGetIdpTrackingReportQuery();
   const promotionReadinessQuery = useGetPromotionReadinessReportQuery();
   const distributionReportQuery = useGetPerformanceDistributionQuery({ cycleId: Number(selectedCycle), departmentId }, { skip: !hasCycle });
   const departmentReportQuery = useGetPerformanceByDepartmentQuery(Number(selectedCycle), { skip: !hasCycle });
   const trendReportQuery = useGetOrganizationPerformanceTrendQuery(6, { skip: !hasCycle });
   const matrixReportQuery = useGetPerformancePotentialMatrixQuery(Number(selectedCycle), { skip: !hasCycle });
   const goalReportQuery = useGetGoalCompletionQuery(Number(selectedCycle), { skip: !hasCycle });
-  const feedback360ReportQuery = useGetFeedback360SummaryAnalyticsQuery(Number(selectedCycle), { skip: !hasCycle });
   const teamBreakdownQuery = useGetTeamPerformanceBreakdownQuery({ cycleId: Number(selectedCycle), departmentId }, { skip: !hasCycle });
 
   const [downloadReport] = useDownloadReportMutation();
@@ -94,7 +95,7 @@ const AnalyticsDashboard = () => {
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      const refreshes: Array<Promise<unknown>> = [pipReportQuery.refetch(), idpReportQuery.refetch(), promotionReadinessQuery.refetch()];
+      const refreshes: Array<Promise<unknown>> = [promotionReadinessQuery.refetch()];
       if (hasCycle) {
         refreshes.push(
           appraisalStatusQuery.refetch(),
@@ -105,7 +106,6 @@ const AnalyticsDashboard = () => {
           trendReportQuery.refetch(),
           matrixReportQuery.refetch(),
           goalReportQuery.refetch(),
-          feedback360ReportQuery.refetch(),
           teamBreakdownQuery.refetch(),
         );
       }
@@ -120,13 +120,10 @@ const AnalyticsDashboard = () => {
     appraisalStatusQuery,
     departmentReportQuery,
     distributionReportQuery,
-    feedback360ReportQuery,
     goalReportQuery,
     hasCycle,
-    idpReportQuery,
     kpiReportQuery,
     matrixReportQuery,
-    pipReportQuery,
     promotionReadinessQuery,
     rankingReportQuery,
     teamBreakdownQuery,
@@ -148,8 +145,8 @@ const AnalyticsDashboard = () => {
     },
     { label: 'Avg Score', value: formatScore(distributionReportQuery.data?.data?.mean) },
     { label: 'Goal Done', value: formatPercent(goalReportQuery.data?.data?.completionRate) },
-    { label: '360 Response', value: formatPercent(feedback360ReportQuery.data?.data?.participationRate) },
-  ], [appraisalStatusQuery.data, distributionReportQuery.data, feedback360ReportQuery.data, goalReportQuery.data]);
+    { label: 'Cycle Status', value: hasCycle ? 'Active' : 'N/A' },
+  ], [appraisalStatusQuery.data, distributionReportQuery.data, goalReportQuery.data, hasCycle]);
 
   const insights = useMemo(() => [
     `${summaryMetrics[0].value} appraisal completion for this cycle.`,
@@ -248,7 +245,6 @@ const AnalyticsDashboard = () => {
             })}
           />
           <GoalCompletionCard data={goalReportQuery.data?.data} />
-          <Feedback360Card data={feedback360ReportQuery.data?.data} />
           <PerformancePotentialMatrixCard data={matrixReportQuery.data?.data} />
 
           <PerformanceRankingTable
@@ -282,33 +278,7 @@ const AnalyticsDashboard = () => {
                 fileName: 'Promotion_Readiness_Report.xlsx',
               })}
             />
-            <PipPanel
-              data={pipReportQuery.data?.data}
-              onDownloadPdf={() => handleDownload({
-                endpoint: 'pip-tracking',
-                params: {},
-                fileName: 'PIP_Global_Report.pdf',
-              })}
-              onDownloadExcel={() => handleDownload({
-                endpoint: 'pip-tracking',
-                params: { format: 'excel' },
-                fileName: 'PIP_Global_Report.xlsx',
-              })}
-            />
-            <IdpPanel
-              data={idpReportQuery.data?.data}
-              onDownloadPdf={() => handleDownload({
-                endpoint: 'idp-tracking',
-                params: {},
-                fileName: 'IDP_Tracking_Report.pdf',
-              })}
-              onDownloadExcel={() => handleDownload({
-                endpoint: 'idp-tracking',
-                params: { format: 'excel' },
-                fileName: 'IDP_Tracking_Report.xlsx',
-              })}
-            />
-            {/* <StrategicInsightCard /> */}
+            <StrategicInsightCard />
           </div>
 
           <UnderPerformanceRankingTable
