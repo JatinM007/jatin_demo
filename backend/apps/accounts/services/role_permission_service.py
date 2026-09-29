@@ -5,7 +5,6 @@ from apps.accounts.models import RolePermission, UserRole
 DEFAULT_ROLE_PERMISSIONS: Dict[str, List[Tuple[str, str]]] = {
     UserRole.SUPER_ADMIN: [
         ('ALL', 'Full Administrative System Control & Overrides'),
-        ('SYSTEM_AUDIT', 'Access and inspect system-wide audit logs'),
         ('ROLE_MANAGE', 'Assign and update user security roles'),
         ('PERMISSION_MANAGE', 'Configure role permission matrices'),
         ('USER_MANAGE', 'Manage employee and user accounts'),
@@ -19,7 +18,6 @@ DEFAULT_ROLE_PERMISSIONS: Dict[str, List[Tuple[str, str]]] = {
         ('CYCLE_MANAGE', 'Manage appraisal cycles and timelines'),
         ('CRITERIA_MANAGE', 'Manage evaluation criteria and templates'),
         ('APPRAISAL_PUBLISH', 'Approve and publish final appraisal scores'),
-        ('PIP_VIEW_ALL', 'Access organization-wide PIP records'),
         ('REPORT_VIEW_ALL', 'View department and company analytics'),
         ('KPI_LIBRARY_MANAGE', 'Manage organization KPI library'),
         ('APPRAISAL_VIEW_TEAM', 'View appraisals across organizational units'),
@@ -30,8 +28,6 @@ DEFAULT_ROLE_PERMISSIONS: Dict[str, List[Tuple[str, str]]] = {
         ('GOAL_ASSIGN', 'Assign and calibrate team member goals and KRAs'),
         ('EVIDENCE_REVIEW', 'Review and approve milestone submissions'),
         ('APPRAISAL_EVALUATE', 'Conduct and score manager evaluations'),
-        ('PIP_CREATE', 'Initiate performance improvement plans'),
-        ('MEETING_MANAGE', 'Conduct and document 1-on-1 sync meetings'),
         ('APPRAISAL_VIEW_TEAM', 'View appraisals for direct reports'),
         ('FEEDBACK_VIEW', 'Access continuous feedback for team and peers'),
         ('FEEDBACK_GIVE', 'Give, draft, and publish continuous performance feedback'),
@@ -41,8 +37,6 @@ DEFAULT_ROLE_PERMISSIONS: Dict[str, List[Tuple[str, str]]] = {
         ('EVIDENCE_SUBMIT', 'Submit proof and evidence for milestones'),
         ('APPRAISAL_SELF_EVALUATE', 'Complete self-assessment forms'),
         ('ATTENDANCE_LOG', 'Log and view daily working attendance'),
-        ('IDP_VIEW', 'View individual development plan milestones'),
-        ('PIP_VIEW_OWN', 'View own performance improvement plan if active'),
         ('FEEDBACK_VIEW', 'View continuous feedback received and given'),
     ]
 }
@@ -53,12 +47,6 @@ SYSTEM_PERMISSIONS_CATALOG = [
         'name': 'Super Admin Master Access',
         'category': 'System Administration',
         'description': 'Full unrestricted bypass across all system endpoints, actions, and entities.'
-    },
-    {
-        'code': 'SYSTEM_AUDIT',
-        'name': 'System Audit Logs',
-        'category': 'System Administration',
-        'description': 'View, inspect, and export immutable administrative audit trails.'
     },
     {
         'code': 'ROLE_MANAGE',

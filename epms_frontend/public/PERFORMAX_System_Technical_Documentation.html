@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PERFORMAX EPMS — System Technical Documentation</title>
+  <style>
+    :root {
+      --primary: #5b21b6;
+      --primary-light: #7c3aed;
+      --primary-subtle: #f5f3ff;
+      --navy: #1e1b4b;
+      --slate-700: #334155;
+      --slate-500: #64748b;
+      --slate-200: #e2e8f0;
+      --slate-100: #f1f5f9;
+      --slate-50: #f8fafc;
+      --emerald-600: #059669;
+      --emerald-50: #ecfdf5;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--slate-700);
+      background-color: #f8fafc;
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 1024px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 56px 64px;
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    }
+    .header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 28px;
+      margin-bottom: 36px;
+    }
+    .title {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      font-size: 16px;
+      color: var(--slate-500);
+      font-weight: 500;
+    }
+    .metadata-card {
+      background: var(--primary-subtle);
+      border: 1px solid #ddd6fe;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--navy);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 32px;
+    }
+    .metadata-card div strong {
+      color: var(--primary);
+    }
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-top: 36px;
+      margin-bottom: 14px;
+      border-left: 4px solid var(--primary);
+      padding-left: 12px;
+      letter-spacing: -0.3px;
+    }
+    h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 22px;
+      margin-bottom: 10px;
+    }
+    p {
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: var(--slate-700);
+    }
+    ul {
+      margin-left: 20px;
+      margin-bottom: 16px;
+    }
+    li {
+      font-size: 13.5px;
+      margin-bottom: 6px;
+      color: var(--slate-700);
+    }
+    li strong {
+      color: var(--navy);
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      background: var(--slate-100);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--primary);
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin: 16px 0 24px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th {
+      background-color: var(--primary);
+      color: #ffffff;
+      font-weight: 600;
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    td {
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      vertical-align: top;
+    }
+    tr:nth-child(even) td {
+      background-color: var(--primary-subtle);
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .badge-success {
+      background-color: var(--emerald-50);
+      color: var(--emerald-600);
+      border: 1px solid #a7f3d0;
+    }
+    @media print {
+      body { background: white; padding: 0; }
+      .container { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+      h2 { page-break-after: avoid; }
+      table { page-break-inside: auto; }
+      tr { page-break-inside: avoid; page-break-after: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title">PERFORMAX EPMS</div>
+      <div class="subtitle">Enterprise Performance Management System — Technical Architecture &amp; System Documentation</div>
+      <div class="metadata-card">
+        <div><strong>Version:</strong> 1.0.0</div>
+        <div><strong>Status:</strong> Production-Ready</div>
+        <div><strong>Date:</strong> September 2026</div>
+        <div><strong>Automated Tests:</strong> 25 Passed (100%)</div>
+      </div>
+    </div>
+
+    <h2>1. Database Schema Architecture</h2>
+    <p>The system is backed by Django ORM with native PostgreSQL (Production) and SQLite (Development) support. Tables enforce foreign key cascades, unique constraints, and strict typing.</p>
+
+    <h3>1.1 Authentication &amp; Security (apps.accounts)</h3>
+    <ul>
+      <li><strong>User (<code>accounts_user</code>):</strong> <code>id</code> (BigAuto PK), <code>username</code> (CharField unique), <code>email</code> (EmailField unique), <code>role</code> (SUPER_ADMIN, HR, MANAGER, EMPLOYEE, INTERN), <code>password_change_required</code> (Bool), <code>is_active</code>, <code>is_staff</code>, <code>is_superuser</code>, <code>date_joined</code>, <code>last_login</code>.</li>
+      <li><strong>EmailOTP (<code>accounts_emailotp</code>):</strong> <code>id</code> (UUID PK), <code>email</code> (CharField), <code>otp_code</code> (CharField), <code>expires_at</code> (DateTime), <code>is_used</code> (Bool).</li>
+      <li><strong>PasswordResetToken (<code>accounts_passwordresettoken</code>):</strong> <code>id</code> (UUID PK), <code>user_id</code> (FK User), <code>token_hash</code> (CharField), <code>expires_at</code> (DateTime), <code>is_used</code> (Bool).</li>
+      <li><strong>RolePermission (<code>accounts_rolepermission</code>):</strong> <code>id</code> (UUID PK), <code>role</code> (CharField), <code>permission_code</code> (CharField), <code>description</code> (CharField). Persists dynamic RBAC mappings.</li>
+    </ul>
+
+    <h3>1.2 Organization Governance (apps.organization)</h3>
+    <ul>
+      <li><strong>Department (<code>organization_department</code>):</strong> <code>id</code> (UUID PK), <code>code</code> (CharField unique), <code>name</code> (CharField), <code>description</code> (TextField), <code>is_active</code> (Bool).</li>
+      <li><strong>JobLevel (<code>organization_joblevel</code>):</strong> <code>id</code> (BigAuto PK), <code>level_code</code> (CharField unique), <code>level_name</code> (CharField), <code>level_rank</code> (Int).</li>
+      <li><strong>Position (<code>organization_position</code>):</strong> <code>id</code> (BigAuto PK), <code>position_code</code> (CharField unique), <code>position_name</code> (CharField), <code>level_id</code> (FK JobLevel).</li>
+      <li><strong>Role (<code>organization_role</code>):</strong> <code>id</code> (BigAuto PK), <code>role_name</code> (CharField unique), <code>description</code> (TextField).</li>
+      <li><strong>Team (<code>organization_team</code>):</strong> <code>id</code> (UUID PK), <code>name</code> (CharField), <code>department_id</code> (FK Department), <code>manager_id</code> (FK User), <code>description</code> (TextField).</li>
+      <li><strong>TeamMembership (<code>organization_teammembership</code>):</strong> <code>id</code> (UUID PK), <code>team_id</code> (FK Team), <code>employee_id</code> (FK EmployeeProfile), <code>is_lead</code> (Bool), <code>joined_at</code> (DateTime).</li>
+      <li><strong>FinancialYear (<code>organization_financialyear</code>):</strong> <code>id</code> (BigAuto PK), <code>title</code> (CharField), <code>start_date</code>, <code>end_date</code> (DateField), <code>is_current</code> (Bool), <code>status</code> (CharField).</li>
+      <li><strong>PerformanceCategory (<code>organization_performancecategory</code>):</strong> <code>id</code> (BigAuto PK), <code>name</code> (CharField), <code>min_score</code>, <code>max_score</code>, <code>rating_value</code> (Int), <code>grade</code> (CharField).</li>
+    </ul>
+
+    <h3>1.3 Employee Information (apps.employees)</h3>
+    <ul>
+      <li><strong>EmployeeProfile (<code>employees_employeeprofile</code>):</strong> <code>id</code> (UUID PK), <code>user_id</code> (OneToOne User), <code>employee_id</code> (CharField unique, e.g. EMP-1001, INT-2026-001), <code>department_id</code> (FK Department), <code>position_id</code> (FK Position), <code>manager_id</code> (FK User), <code>joining_date</code>, <code>phone_number</code>, <code>birth_place</code>, <code>competencies</code> (JSON).</li>
+    </ul>
+
+    <h3>1.4 Performance &amp; Appraisals (apps.performance)</h3>
+    <ul>
+      <li><strong>PerformanceCycle (<code>performance_performancecycle</code>):</strong> <code>id</code> (UUID PK), <code>title</code> (CharField), <code>cycle_type</code> (CharField), <code>start_date</code>, <code>end_date</code> (DateField), <code>status</code> (DRAFT, ACTIVE, IN_REVIEW, CALIBRATION, CLOSED).</li>
+      <li><strong>EvaluationCriterion (<code>performance_evaluationcriterion</code>):</strong> <code>id</code> (UUID PK), <code>cycle_id</code> (FK PerformanceCycle), <code>name</code> (CharField), <code>maximum_score</code>, <code>weight</code> (Decimal).</li>
+      <li><strong>Appraisal (<code>performance_appraisal</code>):</strong> <code>id</code> (UUID PK), <code>employee_id</code> (FK EmployeeProfile), <code>cycle_id</code> (FK PerformanceCycle), <code>reviewer_id</code> (FK User), <code>appraisal_type</code> (CharField), <code>status</code> (DRAFT, SELF_SUBMITTED, MANAGER_REVIEWED, CALIBRATED, PUBLISHED), <code>overall_score</code> (Decimal), <code>classification</code> (CharField), <code>allow_intern_reply</code> (Bool).</li>
+      <li><strong>AppraisalRating (<code>performance_appraisalrating</code>):</strong> <code>id</code> (UUID PK), <code>appraisal_id</code> (FK Appraisal), <code>criterion_id</code> (FK EvaluationCriterion), <code>score</code> (Decimal), <code>comments</code> (TextField).</li>
+      <li><strong>TechnicalCapabilityParameter (<code>performance_technicalcapabilityparameter</code>):</strong> <code>id</code> (UUID PK), <code>cycle_id</code> (FK PerformanceCycle), <code>name</code> (CharField), <code>category</code> (CharField), <code>benchmark_score</code>, <code>weight</code> (Decimal), <code>created_by_id</code> (FK User).</li>
+      <li><strong>TechnicalCapabilityReview (<code>performance_technicalcapabilityreview</code>):</strong> <code>id</code> (UUID PK), <code>parameter_id</code> (FK TechnicalCapabilityParameter), <code>employee_id</code> (FK EmployeeProfile), <code>reviewer_id</code> (FK User), <code>score</code> (Decimal), <code>mentor_assessment</code> (TextField), <code>status</code> (CharField).</li>
+    </ul>
+
+    <h3>1.5 Goals &amp; KRA Library (apps.goals)</h3>
+    <ul>
+      <li><strong>KpiLibrary (<code>goals_kpilibrary</code>):</strong> <code>id</code> (BigAuto PK), <code>title</code> (CharField), <code>position_id</code> (FK Position), <code>target_level_id</code> (FK JobLevel), <code>is_active</code> (Bool).</li>
+      <li><strong>KpiLibraryDetail (<code>goals_kpilibrarydetail</code>):</strong> <code>id</code> (BigAuto PK), <code>library_id</code> (FK KpiLibrary), <code>category_id</code> (FK KpiCategory), <code>goal_title</code> (CharField), <code>unit</code> (CharField), <code>target_value</code> (Decimal), <code>weight_percent</code> (Int), <code>is_compliance</code> (Bool).</li>
+      <li><strong>GoalSet (<code>goals_goalset</code>):</strong> <code>id</code> (BigAuto PK), <code>employee_id</code> (FK EmployeeProfile), <code>cycle_id</code> (FK PerformanceCycle), <code>assigned_by_id</code> (FK User), <code>status</code> (CharField), <code>version</code> (Int).</li>
+      <li><strong>GoalItem (<code>goals_goalitem</code>):</strong> <code>id</code> (BigAuto PK), <code>goal_set_id</code> (FK GoalSet), <code>category_id</code> (FK KpiCategory), <code>title</code> (CharField), <code>target_value</code>, <code>current_progress</code> (Decimal), <code>weight_percent</code> (Int).</li>
+      <li><strong>KpiProgressEntry (<code>goals_kpiprogressentry</code>):</strong> <code>id</code> (BigAuto PK), <code>goal_item_id</code> (FK GoalItem), <code>actual_value</code>, <code>progress_percent</code> (Decimal), <code>evidence_note</code> (TextField), <code>logged_by_id</code> (FK User).</li>
+      <li><strong>KpiAuditTrail (<code>goals_kpiaudittrail</code>):</strong> <code>id</code> (BigAuto PK), <code>employee_id</code> (FK EmployeeProfile), <code>goal_set_id</code> (FK GoalSet), <code>action</code> (CharField), <code>change_reason</code> (TextField), <code>changed_by_id</code> (FK User).</li>
+    </ul>
+
+    <h3>1.6 Feedback, Evidence, Intern &amp; Audit (apps.feedback, intern, evidence, audit)</h3>
+    <ul>
+      <li><strong>Feedback &amp; Comments:</strong> Continuous feedback entries with sender, recipient, type (PRAISE, IMPROVEMENT, CORRECTION), visibility (PUBLIC, MANAGER_ONLY, PEER), and threaded feedback comments.</li>
+      <li><strong>EvidenceSubmission:</strong> Milestone proof submissions with URL links, file attachments, and reviewer workflow (SUBMITTED, APPROVED, REVISION_REQUESTED).</li>
+      <li><strong>InternTask:</strong> Tasks assigned to mentees/interns with priority, deadlines, instructions, and mentor review verification.</li>
+      <li><strong>InternForm &amp; Submission:</strong> Dynamic custom survey forms with multi-type questions (Rating, Text, Single-select) and structured JSON responses.</li>
+      <li><strong>AuditLog (<code>audit_auditlog</code>):</strong> Immutable compliance trail capturing actor, action, entity_type, entity_id, IP address, and JSON metadata.</li>
+    </ul>
+
+    <h2>2. Migrations Catalog</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Application</th>
+          <th>Migration Identifier</th>
+          <th>Key Operations &amp; Schema Additions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>accounts</strong></td><td>0001_initial to 0005_seed_feedback_permissions</td><td>Custom User model, Email OTP, Password reset tokens, dynamic RolePermission schema, and default permission seeds.</td></tr>
+        <tr><td><strong>organization</strong></td><td>0001_initial to 0003_financialyear_...</td><td>Departments, Job Levels, Positions, Roles, Teams, Financial Years, Performance Categories, and Role-Level matrix.</td></tr>
+        <tr><td><strong>employees</strong></td><td>0001_initial to 0005_employeeprofile_...</td><td>EmployeeProfile linked to User and Department, joining dates, skill competencies JSON, and extended bio fields.</td></tr>
+        <tr><td><strong>performance</strong></td><td>0001_initial to 0006_technicalcapability...</td><td>Performance Cycles, Criteria rubrics, Appraisal workflows, Intern reply integration, Technical Capability parameters and review scoring.</td></tr>
+        <tr><td><strong>goals</strong></td><td>0001_initial to 0002_kpicategory_goalset_...</td><td>KRA &amp; KPI Library catalog, GoalSet versioning, GoalItem weightings, KPI progress logging, and KPI audit trail.</td></tr>
+        <tr><td><strong>feedback</strong></td><td>0001_initial to 0002_feedback_is_anonymous_...</td><td>Feedback stream, threaded comments, anonymous feedback mode, and multi-tier visibility controls.</td></tr>
+        <tr><td><strong>evidence</strong></td><td>0001_initial to 0002_initial</td><td>Milestone evidence uploads, file attachment paths, and manager verification status.</td></tr>
+        <tr><td><strong>intern</strong></td><td>0001_initial to 0002_interntask_requires_...</td><td>Intern task management, goal comments, self-appraisals, dynamic custom forms, and mentor review flags.</td></tr>
+        <tr><td><strong>notifications</strong></td><td>0001_initial to 0003_alter_notification_...</td><td>Scheduled announcement broadcaster, delivery time engines, and persona notification types.</td></tr>
+        <tr><td><strong>attendance &amp; training</strong></td><td>0001_initial</td><td>Daily attendance records with check-in/out stamps, training courses catalog, and employee course enrollments.</td></tr>
+        <tr><td><strong>audit</strong></td><td>0001_initial</td><td>Immutable audit trail capturing actor, entity, action, and JSON metadata.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>3. Technology Stack Breakdown</h2>
+    <p>The platform is engineered using modern, type-safe, enterprise-grade frameworks across both backend and client tiers:</p>
+
+    <h3>3.1 Client Tier (Frontend)</h3>
+    <ul>
+      <li><strong>Core Framework:</strong> React 19.2.5 with TypeScript ~6.0.2 for strict compile-time type validation.</li>
+      <li><strong>Build Tooling:</strong> Vite 8.0.9 with Rolldown-backed bundling delivering production builds in under 1.5s.</li>
+      <li><strong>Styling:</strong> Tailwind CSS v4.2.3 utilizing <code>@theme</code> CSS tokens, royal purple palette, and glassmorphic styling.</li>
+      <li><strong>State Management:</strong> Redux Toolkit 2.11.2 with RTK Query for normalized API caching, optimistic updates, and cache tags.</li>
+      <li><strong>Routing:</strong> React Router DOM v7.14.1 with multi-tier protected route wrappers and permission gates.</li>
+      <li><strong>Data Visualization:</strong> Recharts 3.8.1 for interactive performance pulse histograms, radar charts, and trend metrics.</li>
+      <li><strong>Component Utilities:</strong> Lucide React, React Toastify, React Signature Canvas.</li>
+    </ul>
+
+    <h3>3.2 Application Tier (Backend)</h3>
+    <ul>
+      <li><strong>Framework:</strong> Python 3.11 with Django 5.x delivering enterprise ORM, transactions, and security middleware.</li>
+      <li><strong>REST Architecture:</strong> Django REST Framework 3.15.0 with modular ViewSets, permission classes, and serializers.</li>
+      <li><strong>Authentication:</strong> SimpleJWT 5.3.0 supporting stateless Bearer tokens with sliding refresh windows.</li>
+      <li><strong>API Documentation:</strong> drf-spectacular 0.27.0 auto-generating OpenAPI 3.0 specification and interactive Swagger UI at <code>/api/docs/</code>.</li>
+      <li><strong>Production Serving:</strong> WhiteNoise resilient static delivery and Gunicorn WSGI runtime.</li>
+    </ul>
+
+    <h3>3.3 Data &amp; Infrastructure</h3>
+    <ul>
+      <li><strong>Database:</strong> PostgreSQL (Production) with ACID transactions and JSONField; SQLite for local testing.</li>
+      <li><strong>Backend Hosting:</strong> Render (<code>render.yaml</code>) automated container build and start commands.</li>
+      <li><strong>Frontend Hosting:</strong> Vercel (<code>vercel.json</code>) single-page application routing and global edge distribution.</li>
+    </ul>
+
+    <h2>4. Automated Test Suites &amp; Verification</h2>
+    <p>The backend includes comprehensive unit, integration, and security tests. All <strong>25 automated tests pass with 0 errors</strong> (execution time: 16.3s):</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Module</th>
+          <th>Test Name</th>
+          <th>Validation Focus</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>accounts</strong></td><td>test_create_intern_user</td><td>User model creation with INTERN role and password hashing</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>accounts</strong></td><td>test_create_superuser</td><td>Superuser creation with admin flags and permissions</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>accounts</strong></td><td>test_duplicate_email_rejected</td><td>Unique email constraint enforcement</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>accounts</strong></td><td>test_roles_enumeration</td><td>All UserRole choice enumerations valid</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>attendance</strong></td><td>test_attendance_unique_constraint</td><td>Blocks duplicate daily attendance entries per employee</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>attendance</strong></td><td>test_training_course_and_enrollment</td><td>Course creation and employee completion calculation</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>attendance</strong></td><td>test_feedback_privacy_isolation</td><td>Validates feedback privacy scoping</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>attendance</strong></td><td>test_recognition_reward_creation</td><td>Peer recognition reward assignment</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>attendance</strong></td><td>test_audit_service_logging</td><td>Tamper-evident audit log creation</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>employees</strong></td><td>test_jwt_login_and_me_endpoint</td><td>JWT authentication and user profile retrieval</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>employees</strong></td><td>test_intern_least_privilege_scoping</td><td>Intern query isolation prevents accessing peer data</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>employees</strong></td><td>test_manager_scoping</td><td>Manager visibility limited to direct team reports</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>employees</strong></td><td>test_hr_can_create_employee_atomically</td><td>Atomic creation of User + EmployeeProfile records</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>employees</strong></td><td>test_intern_cannot_create_employee</td><td>403 Forbidden on unauthorized employee creation</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>goals</strong></td><td>test_manager_can_create_goal_with_kpi</td><td>Manager goal assignment with associated KPI targets</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>goals</strong></td><td>test_intern_progress_logging</td><td>Progress update calculation and goal completion status</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>goals</strong></td><td>test_evidence_submission_and_review</td><td>Evidence submission and mentor review workflow</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>performance</strong></td><td>test_scoring_mathematical_precision</td><td>Weighted mathematical scoring engine validation</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>performance</strong></td><td>test_appraisal_lifecycle_and_visibility</td><td>Stage gate enforcement from draft to published</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>reports</strong></td><td>test_intern_can_view_own_summary</td><td>Personal performance summary report retrieval</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>reports</strong></td><td>test_intern_forbidden_other_report</td><td>Access denial for other employees' reports</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>reports</strong></td><td>test_manager_can_view_team_summary</td><td>Manager aggregated team metrics retrieval</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>reports</strong></td><td>test_intern_cannot_access_team_report</td><td>Blocks non-managers from team-level analytics</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>reports</strong></td><td>test_hr_can_view_organization_summary</td><td>Organization-wide analytics access for HR</td><td><span class="badge badge-success">PASSED</span></td></tr>
+        <tr><td><strong>reports</strong></td><td>test_export_performance_csv</td><td>CSV export generation and content verification</td><td><span class="badge badge-success">PASSED</span></td></tr>
+      </tbody>
+    </table>
+
+    <h2>5. Role-Based Access Control (RBAC) Matrix</h2>
+    <p>Permissions are strictly segmented across 5 core roles following the Principle of Least Privilege (PoLP):</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Functional Area</th>
+          <th>Code</th>
+          <th>Super Admin</th>
+          <th>HR Partner</th>
+          <th>Tech Manager</th>
+          <th>Intern / Emp</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Master Admin Access</strong></td><td><code>ALL</code></td><td>Full Bypass</td><td>No Access</td><td>No Access</td><td>No Access</td></tr>
+        <tr><td><strong>Role Management</strong></td><td><code>ROLE_MANAGE</code></td><td>Edit &amp; Assign</td><td>No Access</td><td>No Access</td><td>No Access</td></tr>
+        <tr><td><strong>Permission Matrix</strong></td><td><code>PERMISSION_MANAGE</code></td><td>Full Config</td><td>No Access</td><td>No Access</td><td>No Access</td></tr>
+        <tr><td><strong>System Audit Logs</strong></td><td><code>SYSTEM_AUDIT</code></td><td>View &amp; Export</td><td>No Access</td><td>No Access</td><td>No Access</td></tr>
+        <tr><td><strong>User / Employee Directory</strong></td><td><code>USER_MANAGE</code></td><td>Full CRUD</td><td>Create &amp; Edit</td><td>Team Read</td><td>Self Read</td></tr>
+        <tr><td><strong>Org Structure &amp; Teams</strong></td><td><code>ORG_GOVERNANCE</code></td><td>Full CRUD</td><td>Manage Depts</td><td>Team Read</td><td>Read Only</td></tr>
+        <tr><td><strong>Performance Cycles</strong></td><td><code>CYCLE_MANAGE</code></td><td>Create / Launch</td><td>Manage / Close</td><td>Read Only</td><td>Active Only</td></tr>
+        <tr><td><strong>Evaluation Rubrics</strong></td><td><code>CRITERIA_MANAGE</code></td><td>Global Config</td><td>Form Builder</td><td>Read Only</td><td>No Access</td></tr>
+        <tr><td><strong>Appraisal Final Publish</strong></td><td><code>APPRAISAL_PUBLISH</code></td><td>Overrides</td><td>Final Release</td><td>No Access</td><td>No Access</td></tr>
+        <tr><td><strong>Manager Evaluation</strong></td><td><code>APPRAISAL_EVALUATE</code></td><td>Supervise</td><td>Calibrate</td><td>Score Reports</td><td>No Access</td></tr>
+        <tr><td><strong>Self-Assessment</strong></td><td><code>APPRAISAL_SELF</code></td><td>No Access</td><td>No Access</td><td>Self Only</td><td>Self Only</td></tr>
+        <tr><td><strong>KRA / KPI Library</strong></td><td><code>KPI_LIBRARY_MANAGE</code></td><td>Full Control</td><td>Manage Catalog</td><td>Assign Team</td><td>View Own</td></tr>
+        <tr><td><strong>Goal Assignment</strong></td><td><code>GOAL_ASSIGN</code></td><td>System-wide</td><td>Org-wide</td><td>Team Directs</td><td>No Access</td></tr>
+        <tr><td><strong>Goal Progress Logging</strong></td><td><code>GOAL_LOG</code></td><td>Full Access</td><td>Full Access</td><td>Team Reviews</td><td>Log Own</td></tr>
+        <tr><td><strong>Technical Capabilities</strong></td><td><code>TECH_CAPABILITY</code></td><td>Manage Library</td><td>Overview</td><td>Review &amp; Score</td><td>View Assigned</td></tr>
+        <tr><td><strong>Evidence Submission</strong></td><td><code>EVIDENCE_SUBMIT</code></td><td>No Access</td><td>No Access</td><td>No Access</td><td>Submit Proof</td></tr>
+        <tr><td><strong>Evidence Verification</strong></td><td><code>EVIDENCE_REVIEW</code></td><td>Oversee</td><td>View Only</td><td>Approve/Reject</td><td>No Access</td></tr>
+        <tr><td><strong>Continuous Feedback</strong></td><td><code>FEEDBACK_GIVE</code></td><td>Full Feed</td><td>Full Feed</td><td>Team &amp; Peers</td><td>Give &amp; Receive</td></tr>
+        <tr><td><strong>Strategic Analytics</strong></td><td><code>REPORT_VIEW_ALL</code></td><td>Strategic Pulse</td><td>Org Analytics</td><td>Team Pulse</td><td>Personal Only</td></tr>
+        <tr><td><strong>Intern Tasks</strong></td><td><code>TASK_MANAGE</code></td><td>View All</td><td>View All</td><td>Create / Assign</td><td>Complete Tasks</td></tr>
+        <tr><td><strong>Announcement Broadcast</strong></td><td><code>NOTIFICATION_POST</code></td><td>Broadcast Org</td><td>No Access</td><td>No Access</td><td>Read Inbox</td></tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

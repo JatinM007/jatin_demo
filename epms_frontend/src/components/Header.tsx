@@ -31,11 +31,8 @@ const PAGE_MAP: Record<string, PageInfo> = {
   "/kpi/team":             { section: "Objectives & KRAs", title: "Team Performance Pulse" },
   "/kpi/manage":           { section: "Objectives & KRAs", title: "Goal Management" },
   "/kpi/library":          { section: "Objectives & KRAs", title: "KRA Library" },
-  "/kpi/categories":       { section: "Objectives & KRAs", title: "KRA Categories" },
-  "/meetings":             { title: "1-on-1 Sync Sessions" },
   "/continuous-feedback":  { title: "Continuous Feedback Stream" },
   "/performance-history":  { title: "Performance Pulse" },
-  "/audit-logs":           { section: "Governance", title: "Enterprise Audit Logs" },
 };
 
 function resolvePageInfo(pathname: string): PageInfo {

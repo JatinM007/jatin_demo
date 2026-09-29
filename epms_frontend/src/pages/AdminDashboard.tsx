@@ -26,7 +26,6 @@ const AdminDashboard: React.FC = () => {
   ];
 
   const quickActions: Action[] = [
-    { id: '1', label: 'System logs', icon: <Server size={16} />, onClick: () => navigate('/admin/audit-logs'), color: 'bg-gray-100 text-gray-600' },
     { id: '2', label: 'User management', icon: <Users size={16} />, onClick: () => navigate('/admin/users'), color: 'bg-blue-100 text-blue-600' },
     { id: '3', label: 'Security', icon: <Shield size={16} />, onClick: () => navigate('/admin/security'), color: 'bg-red-100 text-red-600' },
     { id: '4', label: 'DB backup', icon: <Database size={16} />, onClick: () => navigate('/admin/backup'), color: 'bg-green-100 text-green-600' },

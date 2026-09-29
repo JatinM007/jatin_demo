@@ -1552,8 +1552,8 @@ const HrDashboard: React.FC = () => {
           {/* Header & CSV Download */}
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Project Reports & Audit Log (Items 21, 23, 24)</h3>
-              <p className="text-xs text-slate-500">Download data sheets, view distribution charts, and inspect audit trails.</p>
+              <h3 className="text-sm font-bold text-slate-900">Project Reports & Analytics</h3>
+              <p className="text-xs text-slate-500">Download data sheets and view distribution charts.</p>
             </div>
             <button
               onClick={handleExportCsv}
@@ -1584,46 +1584,6 @@ const HrDashboard: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </div>
-
-          {/* Immutable System Audit Log (Feature 23) */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  System Audit Trail & History (Item 23)
-                </h4>
-                <p className="text-[11px] text-slate-400">Automatic record of actions performed in this session.</p>
-              </div>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
-                {auditLogs.length} Records
-              </span>
-            </div>
-
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[11px]">
-                <tr>
-                  <th className="py-2.5 px-4">Time</th>
-                  <th className="py-2.5 px-3">User</th>
-                  <th className="py-2.5 px-3">Action</th>
-                  <th className="py-2.5 px-4">Details</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {auditLogs.map(log => (
-                  <tr key={log.id} className="hover:bg-slate-50/50">
-                    <td className="py-2.5 px-4 text-slate-400 font-mono text-[11px]">{log.time}</td>
-                    <td className="py-2.5 px-3 font-semibold text-slate-800">{log.user}</td>
-                    <td className="py-2.5 px-3">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">
-                        {log.action}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-4 text-slate-700">{log.details}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
       )}

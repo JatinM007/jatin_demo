@@ -150,7 +150,7 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 500, color: "#111827" }}>
-                    {isEmployee ? "Submit self-assessment" : isManager ? "Review team appraisal" : "Audit log review"}
+                    {isEmployee ? "Submit self-assessment" : isManager ? "Review team appraisal" : "Cycle progress review"}
                   </p>
                   <p style={{ fontSize: 11, color: "#9EA3B0", marginTop: 1 }}>Due in 2 days</p>
                 </div>
