@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useAuth } from '../hooks/useAuth';
+import { useAssignGoalMutation, useGetAllAssignedGoalsQuery } from '../features/dashboard/dashboardApi';
+import { useGetAllEmployeesQuery } from '../features/employee/employeeApi';
 
 // ----------------------------------------------------
 // SIMPLE DATA TYPES
@@ -370,9 +372,82 @@ const HrDashboard: React.FC = () => {
   const [newCycleName, setNewCycleName] = useState('');
   const [newCycleQuarter, setNewCycleQuarter] = useState('Q2 2026');
 
+  const { data: dbEmployees = [] } = useGetAllEmployeesQuery();
+  const { data: dbGoals = [] } = useGetAllAssignedGoalsQuery();
+  const [assignGoalMutation, { isLoading: isAssigningGoal }] = useAssignGoalMutation();
+
   const [newGoalIntern, setNewGoalIntern] = useState('Alex Chen');
+  const [newGoalInternId, setNewGoalInternId] = useState('');
   const [newGoalTitle, setNewGoalTitle] = useState('');
   const [newGoalCategory, setNewGoalCategory] = useState('Technical Goal');
+  const [newGoalDueDate, setNewGoalDueDate] = useState('2026-06-30');
+  const [newGoalPriority, setNewGoalPriority] = useState('MEDIUM');
+
+  // Authentic Interns from DB
+  const authenticInterns = useMemo(() => {
+    if (!dbEmployees || !Array.isArray(dbEmployees)) return [];
+    return dbEmployees
+      .filter((emp: any) => {
+        const roles = emp.roles || [];
+        const pos = (emp.positionName || emp.designation || '').toLowerCase();
+        const code = (emp.employeeCode || '').toLowerCase();
+        return roles.includes('INTERN') || roles.includes('ROLE_INTERN') || pos.includes('intern') || code.includes('int');
+      })
+      .map((emp: any) => ({
+        id: String(emp.id),
+        name: emp.staffName || emp.name || emp.username,
+        email: emp.email,
+        code: emp.employeeCode || `INT-${emp.id}`,
+        cohort: 'MIRAI Cohort 1',
+        batch: 'Batch A',
+        subBatch: 'A1',
+        section: emp.departmentName || 'Engineering',
+        subSection: 'Core',
+        mentor: emp.managerName || 'Marcus Vance',
+        evaluator: emp.managerName || 'Marcus Vance',
+        score: 75.0,
+        classification: 'Progressing' as const,
+        status: (emp.status === 'INACTIVE' ? 'DEACTIVATED' : 'ACTIVE') as const,
+        published: false,
+        joiningDate: emp.dateOfAppointment || '2026-09-26'
+      }));
+  }, [dbEmployees]);
+
+  // Sync authentic interns to state on load
+  useEffect(() => {
+    if (authenticInterns.length > 0) {
+      setInterns(prev => {
+        const existingNames = new Set(prev.map(i => i.name.toLowerCase()));
+        const newAdditions = authenticInterns.filter(ai => !existingNames.has(ai.name.toLowerCase()));
+        return [...newAdditions, ...prev];
+      });
+      if (!newGoalInternId) {
+        setNewGoalInternId(authenticInterns[0].id);
+        setNewGoalIntern(authenticInterns[0].name);
+      }
+    }
+  }, [authenticInterns]);
+
+  // Sync db goals to state
+  useEffect(() => {
+    if (dbGoals && Array.isArray(dbGoals) && dbGoals.length > 0) {
+      const mappedDbGoals: Goal[] = dbGoals.map((g: any) => ({
+        id: String(g.id),
+        internName: g.employee_name || g.employeeName || 'Intern',
+        title: g.title,
+        category: g.description?.includes(' - Assigned by HR') ? g.description.split(' - Assigned by HR')[0] : 'Technical Goal',
+        section: 'Engineering',
+        dueDate: g.due_date || g.dueDate || '2026-06-30',
+        progress: Math.round(Number(g.completion_percentage ?? g.progress ?? 0)),
+        status: (g.status === 'COMPLETED' || g.completion_percentage >= 100) ? 'Completed' : (g.status === 'IN_PROGRESS' || g.completion_percentage > 0) ? 'In Progress' : 'Not Started'
+      }));
+      setGoals(prev => {
+        const dbIds = new Set(mappedDbGoals.map(m => m.id));
+        const nonDb = prev.filter(p => !dbIds.has(p.id) && !p.id.startsWith('g-'));
+        return [...mappedDbGoals, ...nonDb];
+      });
+    }
+  }, [dbGoals]);
 
   const [newQuestionText, setNewQuestionText] = useState('');
   const [newQuestionSection, setNewQuestionSection] = useState('Technical Capability (60%)');
@@ -617,25 +692,53 @@ const HrDashboard: React.FC = () => {
     setNewCycleName('');
   };
 
-  // 8. Assign Goal
-  const handleAssignGoal = (e: React.FormEvent) => {
+  // 8. Assign Goal (Persisted to backend and reflected immediately in Intern Dashboard)
+  const handleAssignGoal = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newGoalTitle) return;
-    const newG: Goal = {
-      id: `g-${Date.now()}`,
-      internName: newGoalIntern,
-      title: newGoalTitle,
-      category: newGoalCategory,
-      section: 'Engineering',
-      dueDate: '2026-03-31',
-      progress: 0,
-      status: 'Not Started'
-    };
-    setGoals(prev => [newG, ...prev]);
-    addAudit('Assign Goal', `Assigned "${newG.title}" to ${newG.internName}`);
-    toast.success(`Goal assigned to ${newG.internName}!`);
-    setShowAddGoalModal(false);
-    setNewGoalTitle('');
+    if (!newGoalTitle.trim()) {
+      toast.error("Please enter a goal title.");
+      return;
+    }
+
+    // Resolve target intern
+    const targetIntern = (authenticInterns.length > 0 ? authenticInterns : interns).find(
+      i => i.id === newGoalInternId || i.name === newGoalIntern
+    ) || authenticInterns[0] || interns[0];
+
+    const employeeId = targetIntern?.id || newGoalInternId;
+    const internName = targetIntern?.name || newGoalIntern;
+
+    try {
+      if (employeeId && !employeeId.startsWith('emp-')) {
+        await assignGoalMutation({
+          employee: employeeId,
+          title: newGoalTitle.trim(),
+          description: `${newGoalCategory} - Assigned by HR`,
+          due_date: newGoalDueDate || '2026-06-30',
+          priority: newGoalPriority || 'MEDIUM',
+        }).unwrap();
+      }
+
+      const newG: Goal = {
+        id: `g-${Date.now()}`,
+        internName: internName,
+        title: newGoalTitle.trim(),
+        category: newGoalCategory,
+        section: targetIntern?.section || 'Engineering',
+        dueDate: newGoalDueDate || '2026-06-30',
+        progress: 0,
+        status: 'Not Started'
+      };
+
+      setGoals(prev => [newG, ...prev]);
+      addAudit('Assign Goal', `Assigned "${newG.title}" to ${internName}`);
+      toast.success(`Goal "${newG.title}" successfully assigned to ${internName}!`);
+      setShowAddGoalModal(false);
+      setNewGoalTitle('');
+    } catch (err: any) {
+      console.error("Failed to assign goal on backend:", err);
+      toast.error(err?.data?.message || err?.data?.detail || "Failed to assign goal to database.");
+    }
   };
 
   // 10. Track Goal Progress (+10% / Complete)
@@ -1950,11 +2053,20 @@ const HrDashboard: React.FC = () => {
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Select Intern</label>
                 <select
-                  value={newGoalIntern}
-                  onChange={(e) => setNewGoalIntern(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl"
+                  value={newGoalInternId || (interns.find(i => i.name === newGoalIntern)?.id || '')}
+                  onChange={(e) => {
+                    const selId = e.target.value;
+                    setNewGoalInternId(selId);
+                    const found = (authenticInterns.length > 0 ? authenticInterns : interns).find(i => i.id === selId);
+                    if (found) setNewGoalIntern(found.name);
+                  }}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white"
                 >
-                  {interns.map(i => <option key={i.id} value={i.name}>{i.name}</option>)}
+                  {(authenticInterns.length > 0 ? authenticInterns : interns).map(i => (
+                    <option key={i.id} value={i.id}>
+                      {i.name} {i.code ? `(${i.code})` : ''}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -1968,18 +2080,44 @@ const HrDashboard: React.FC = () => {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Category</label>
+                  <select
+                    value={newGoalCategory}
+                    onChange={(e) => setNewGoalCategory(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white"
+                  >
+                    <option value="Technical Goal">Technical Goal</option>
+                    <option value="Design Goal">Design Goal</option>
+                    <option value="Quality Goal">Quality Goal</option>
+                    <option value="Soft Skills">Soft Skills</option>
+                    <option value="Infrastructure">Infrastructure</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Priority</label>
+                  <select
+                    value={newGoalPriority}
+                    onChange={(e) => setNewGoalPriority(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white"
+                  >
+                    <option value="MEDIUM">Medium Priority</option>
+                    <option value="HIGH">High Priority</option>
+                    <option value="CRITICAL">Critical Priority</option>
+                    <option value="LOW">Low Priority</option>
+                  </select>
+                </div>
+              </div>
+
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Category</label>
-                <select
-                  value={newGoalCategory}
-                  onChange={(e) => setNewGoalCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl"
-                >
-                  <option value="Technical Goal">Technical Goal</option>
-                  <option value="Design Goal">Design Goal</option>
-                  <option value="Quality Goal">Quality Goal</option>
-                  <option value="Soft Skills">Soft Skills</option>
-                </select>
+                <label className="block font-semibold text-slate-700 mb-1">Target Due Date</label>
+                <input
+                  type="date"
+                  value={newGoalDueDate}
+                  onChange={(e) => setNewGoalDueDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white"
+                />
               </div>
 
               <div className="flex gap-2 pt-2">
@@ -1991,9 +2129,10 @@ const HrDashboard: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl"
+                  disabled={isAssigningGoal}
+                  className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  Assign Goal
+                  {isAssigningGoal ? 'Assigning...' : 'Assign Goal'}
                 </button>
               </div>
             </form>

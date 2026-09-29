@@ -12,12 +12,12 @@ urlpatterns = [
     # Goals, Progress Sliders & Goal Comments
     path('my-goals/', views.InternGoalsView.as_view(), name='my_goals'),
     path('goals/', views.InternGoalsView.as_view(), name='goals_list'),
-    path('my-goals/<uuid:pk>/', views.InternGoalDetailView.as_view(), name='my_goal_detail'),
-    path('goals/<uuid:pk>/', views.InternGoalDetailView.as_view(), name='goal_detail'),
-    path('my-goals/<uuid:pk>/progress/', views.InternUpdateProgressView.as_view(), name='update_progress'),
-    path('goals/<uuid:pk>/progress/', views.InternUpdateProgressView.as_view(), name='update_goal_progress'),
-    path('my-goals/<uuid:pk>/comments/', views.InternGoalCommentsView.as_view(), name='goal_comments'),
-    path('goals/<uuid:pk>/comments/', views.InternGoalCommentsView.as_view(), name='goal_comments_alt'),
+    path('my-goals/<str:pk>/', views.InternGoalDetailView.as_view(), name='my_goal_detail'),
+    path('goals/<str:pk>/', views.InternGoalDetailView.as_view(), name='goal_detail'),
+    path('my-goals/<str:pk>/progress/', views.InternUpdateProgressView.as_view(), name='update_progress'),
+    path('goals/<str:pk>/progress/', views.InternUpdateProgressView.as_view(), name='update_goal_progress'),
+    path('my-goals/<str:pk>/comments/', views.InternGoalCommentsView.as_view(), name='goal_comments'),
+    path('goals/<str:pk>/comments/', views.InternGoalCommentsView.as_view(), name='goal_comments_alt'),
 
     # Evidence Submissions (File attachments, URLs, status)
     path('evidence/', views.InternEvidenceView.as_view(), name='evidence_list'),

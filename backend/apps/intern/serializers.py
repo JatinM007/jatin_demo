@@ -34,22 +34,66 @@ def validate_file_attachment(file_obj):
         raise ValidationError(f"Unsupported file format '.{ext}'. Allowed types: {', '.join(sorted(ALLOWED_FILE_EXTENSIONS))}.")
 
 
+def get_user_display_name(user):
+    if not user:
+        return 'HR Admin'
+    profile = getattr(user, 'profile', None)
+    if profile and profile.full_name:
+        return profile.full_name
+    first = getattr(user, 'first_name', '')
+    last = getattr(user, 'last_name', '')
+    if first or last:
+        return f"{first} {last}".strip()
+    return getattr(user, 'username', 'HR Admin')
+
+
 class InternGoalListSerializer(serializers.ModelSerializer):
     progress = serializers.FloatField(source='completion_percentage', read_only=True)
+    completionPercentage = serializers.FloatField(source='completion_percentage', read_only=True)
     cycle_name = serializers.CharField(source='cycle.name', read_only=True)
-    assigned_by_name = serializers.CharField(source='assigned_by.username', read_only=True, default='Mentor')
+    cycleName = serializers.CharField(source='cycle.name', read_only=True)
+    assigned_by_name = serializers.CharField(source='assigned_by.username', read_only=True, default='HR Admin')
+    assignedByName = serializers.CharField(source='assigned_by.username', read_only=True, default='HR Admin')
     comments_count = serializers.IntegerField(source='goal_comments.count', read_only=True)
     evidence_count = serializers.IntegerField(source='evidence_submissions.count', read_only=True)
+    weight = serializers.SerializerMethodField()
+    weightage = serializers.SerializerMethodField()
+    dueDate = serializers.DateField(source='due_date', read_only=True)
+    comments = serializers.SerializerMethodField()
 
     class Meta:
         model = Goal
         fields = (
-            'id', 'title', 'description', 'due_date', 'status', 'priority',
-            'completion_percentage', 'progress', 'weight', 'cycle', 'cycle_name',
-            'assigned_by_name', 'comments_count', 'evidence_count',
+            'id', 'title', 'description', 'due_date', 'dueDate', 'status', 'priority',
+            'completion_percentage', 'completionPercentage', 'progress', 'weight', 'weightage',
+            'cycle', 'cycle_name', 'cycleName',
+            'assigned_by_name', 'assignedByName', 'comments_count', 'evidence_count', 'comments',
             'created_at', 'updated_at'
         )
         read_only_fields = fields
+
+    def get_weight(self, obj):
+        return float(getattr(obj, 'weight', 20.0) or 20.0)
+
+    def get_weightage(self, obj):
+        return float(getattr(obj, 'weight', 20.0) or 20.0)
+
+    def get_comments(self, obj):
+        if not hasattr(obj, 'goal_comments'):
+            return []
+        comments = []
+        for c in obj.goal_comments.all().select_related('author').order_by('created_at'):
+            author_role = getattr(c.author, 'role', 'MEMBER')
+            comments.append({
+                'id': str(c.id),
+                'authorName': get_user_display_name(c.author),
+                'authorRole': author_role,
+                'comment': c.comment,
+                'isMentor': author_role in ('MANAGER', 'HR', 'SUPER_ADMIN'),
+                'createdAt': c.created_at.strftime('%Y-%m-%d %H:%M'),
+                'parentId': str(c.parent_id) if c.parent_id else None
+            })
+        return comments
 
 
 class InternGoalProgressUpdateSerializer(serializers.Serializer):

@@ -1,4 +1,5 @@
 import os
+import uuid
 from decimal import Decimal
 from datetime import date, datetime, timedelta
 from django.db.models import Q
@@ -10,7 +11,7 @@ from rest_framework.exceptions import ValidationError, PermissionDenied, NotFoun
 
 from apps.accounts.models import User, UserRole
 from apps.employees.models import EmployeeProfile
-from apps.goals.models import Goal, GoalStatus, GoalPriority, GoalProgress
+from apps.goals.models import Goal, GoalStatus, GoalPriority, GoalProgress, GoalSet, GoalItem, KpiProgressEntry
 from apps.evidence.models import EvidenceSubmission, EvidenceReviewStatus
 from apps.performance.models import (
     PerformanceCycle, Appraisal, AppraisalType, AppraisalStatus, CycleStatus
@@ -46,6 +47,27 @@ def get_authenticated_intern_profile(user):
     if not profile:
         raise NotFound("Employee profile not found for this account.")
     return profile
+
+
+def is_valid_uuid(val):
+    try:
+        uuid.UUID(str(val))
+        return True
+    except (ValueError, AttributeError, TypeError):
+        return False
+
+
+def get_user_display_name(user):
+    if not user:
+        return 'HR Admin'
+    profile = getattr(user, 'profile', None)
+    if profile and profile.full_name:
+        return profile.full_name
+    first = getattr(user, 'first_name', '')
+    last = getattr(user, 'last_name', '')
+    if first or last:
+        return f"{first} {last}".strip()
+    return getattr(user, 'username', 'HR Admin')
 
 
 def get_performance_classification(score):
@@ -124,13 +146,32 @@ class InternOverviewView(APIView):
                 'evidenceDeadline': active_cycle.evidence_deadline.isoformat() if active_cycle.evidence_deadline else active_cycle.end_date.isoformat()
             }
 
-        # 3. Assigned Goals (Authentic data only)
+        # 3. Assigned Goals (Authentic data: both direct Goals and HR-assigned GoalItems)
         goals_qs = Goal.objects.filter(employee=profile)
         total_goals = goals_qs.count()
         completed_goals = goals_qs.filter(
             Q(status=GoalStatus.COMPLETED) | Q(completion_percentage=Decimal('100.00'))
         ).count()
-        avg_progress = float(ScoringService.calculate_weighted_goal_progress(list(goals_qs)))
+        if total_goals > 0:
+            avg_progress = float(sum(g.completion_percentage for g in goals_qs) / Decimal(total_goals))
+        else:
+            avg_progress = 0.0
+
+        goal_items_qs = GoalItem.objects.filter(goal_set__employee=profile)
+        gi_count = goal_items_qs.count()
+        if gi_count > 0:
+            gi_completed = goal_items_qs.filter(Q(status='COMPLETED') | Q(current_progress__gte=Decimal('100.00'))).count()
+            gi_scores = [float(gi.score_percent) for gi in goal_items_qs]
+            gi_avg = sum(gi_scores) / gi_count if gi_count else 0.0
+
+            if total_goals > 0:
+                total_goals += gi_count
+                completed_goals += gi_completed
+                avg_progress = round((avg_progress * (total_goals - gi_count) + gi_avg * gi_count) / total_goals, 1)
+            else:
+                total_goals = gi_count
+                completed_goals = gi_completed
+                avg_progress = round(gi_avg, 1)
 
         # 4. Assigned Tasks
         tasks_qs = InternTask.objects.filter(intern=profile)
@@ -183,6 +224,20 @@ class InternOverviewView(APIView):
                 'daysLeft': days_left,
                 'status': st
             })
+
+        for gi in goal_items_qs.exclude(status='COMPLETED')[:5]:
+            cycle_end = gi.goal_set.cycle.end_date if (gi.goal_set.cycle and gi.goal_set.cycle.end_date) else None
+            if cycle_end:
+                days_left = (cycle_end - today).days
+                st = 'OVERDUE' if days_left < 0 else ('DUE_TODAY' if days_left == 0 else 'UPCOMING')
+                deadlines.append({
+                    'id': f"gi-{gi.id}",
+                    'title': gi.title,
+                    'type': 'GOAL',
+                    'dueDate': cycle_end.isoformat(),
+                    'daysLeft': days_left,
+                    'status': st
+                })
 
         for t in tasks_qs.exclude(status=TaskStatus.COMPLETED).order_by('due_date')[:5]:
             days_left = (t.due_date - today).days
@@ -263,49 +318,146 @@ class InternOverviewView(APIView):
 class InternGoalsView(APIView):
     """
     List all assigned goals for the authenticated intern.
-    Strictly isolated: returns only goals where employee=profile.
+    Combines both direct Goal records and HR-assigned GoalSet / GoalItem records.
     """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         profile = get_authenticated_intern_profile(request.user)
-        goals = Goal.objects.filter(employee=profile).select_related('cycle', 'assigned_by').order_by('due_date')
-        serializer = InternGoalListSerializer(goals, many=True)
-        return Response({'code': 200, 'data': serializer.data})
+        direct_goals = Goal.objects.filter(employee=profile).select_related('cycle', 'assigned_by').order_by('due_date')
+        direct_data = list(InternGoalListSerializer(direct_goals, many=True).data)
+
+        # Also load all GoalItems assigned via HR KPI Library / GoalSets
+        goal_items = GoalItem.objects.filter(
+            goal_set__employee=profile
+        ).select_related('goal_set__cycle', 'goal_set__assigned_by', 'category').order_by('id')
+
+        items_data = []
+        for gi in goal_items:
+            cycle_name = gi.goal_set.cycle.name if gi.goal_set.cycle else 'Active Term'
+            cycle_end = gi.goal_set.cycle.end_date.isoformat() if (gi.goal_set.cycle and gi.goal_set.cycle.end_date) else None
+            assigned_by_user = gi.goal_set.assigned_by
+            assigned_name = get_user_display_name(assigned_by_user)
+
+            score_val = float(gi.score_percent)
+            target_val = float(gi.target_value) if gi.target_value else 100.0
+            unit = gi.unit or '%'
+
+            desc = gi.description or f"Target: {target_val} {unit}"
+            if gi.category and gi.category.name:
+                desc = f"[{gi.category.name}] {desc}"
+
+            # Collect any progress entries as comments
+            entries = []
+            for pe in gi.progress_entries.all().select_related('logged_by').order_by('created_at'):
+                logged_name = pe.logged_by.username if pe.logged_by else 'Intern'
+                entries.append({
+                    'id': f"pe-{pe.id}",
+                    'authorName': logged_name,
+                    'authorRole': getattr(pe.logged_by, 'role', 'INTERN') if pe.logged_by else 'INTERN',
+                    'comment': pe.evidence_note or f"Updated progress to {float(pe.progress_percent)}%",
+                    'isMentor': False,
+                    'createdAt': pe.created_at.strftime('%Y-%m-%d %H:%M'),
+                    'parentId': None
+                })
+
+            items_data.append({
+                'id': str(gi.id),
+                'title': gi.title,
+                'description': desc,
+                'due_date': cycle_end,
+                'dueDate': cycle_end,
+                'status': 'COMPLETED' if gi.status == 'COMPLETED' or score_val >= 100.0 else ('IN_PROGRESS' if score_val > 0.0 or gi.status == 'IN_PROGRESS' else 'NOT_STARTED'),
+                'priority': 'HIGH' if gi.weight_percent >= 30 else 'MEDIUM',
+                'completion_percentage': score_val,
+                'completionPercentage': score_val,
+                'progress': score_val,
+                'weight': gi.weight_percent,
+                'weightage': gi.weight_percent,
+                'cycle': str(gi.goal_set.cycle.id) if gi.goal_set.cycle else None,
+                'cycle_name': cycle_name,
+                'cycleName': cycle_name,
+                'assigned_by_name': assigned_name,
+                'assignedByName': assigned_name,
+                'comments_count': len(entries),
+                'evidence_count': 0,
+                'comments': entries,
+                'created_at': gi.created_at.isoformat() if gi.created_at else None,
+                'updated_at': gi.updated_at.isoformat() if gi.updated_at else None,
+            })
+
+        combined_goals = direct_data + items_data
+        return Response({'code': 200, 'data': combined_goals})
 
 
 class InternGoalDetailView(APIView):
     """
     Retrieve single goal detail with complete audit progress updates and comment counts.
     Anti-IDOR: Returns 404 if goal does not belong to the authenticated intern.
+    Supports both direct Goal models and GoalItem models.
     """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         profile = get_authenticated_intern_profile(request.user)
-        goal = Goal.objects.filter(id=pk, employee=profile).select_related('cycle', 'assigned_by').first()
-        if not goal:
-            return Response({'code': 404, 'message': 'Goal not found or access denied.'}, status=status.HTTP_404_NOT_FOUND)
+        if is_valid_uuid(pk):
+            goal = Goal.objects.filter(id=pk, employee=profile).select_related('cycle', 'assigned_by').first()
+            if goal:
+                serializer = InternGoalListSerializer(goal)
+                progress_updates = [{
+                    'id': str(p.id),
+                    'progressPercentage': float(p.progress_percentage),
+                    'comment': p.comment,
+                    'updatedBy': p.updated_by.username if p.updated_by else 'Intern',
+                    'createdAt': p.created_at.strftime('%Y-%m-%d %H:%M')
+                } for p in goal.progress_updates.all().order_by('-created_at')]
+                data = serializer.data
+                data['progressUpdates'] = progress_updates
+                return Response({'code': 200, 'data': data})
 
-        serializer = InternGoalListSerializer(goal)
-        progress_updates = [{
-            'id': str(p.id),
-            'progressPercentage': float(p.progress_percentage),
-            'comment': p.comment,
-            'updatedBy': p.updated_by.username if p.updated_by else 'Intern',
-            'createdAt': p.created_at.strftime('%Y-%m-%d %H:%M')
-        } for p in goal.progress_updates.all().order_by('-created_at')]
+        # Try GoalItem
+        goal_item = GoalItem.objects.filter(id=pk, goal_set__employee=profile).select_related('goal_set__cycle', 'goal_set__assigned_by', 'category').first()
+        if goal_item:
+            cycle_name = goal_item.goal_set.cycle.name if goal_item.goal_set.cycle else 'Active Term'
+            cycle_end = goal_item.goal_set.cycle.end_date.isoformat() if (goal_item.goal_set.cycle and goal_item.goal_set.cycle.end_date) else None
+            score_val = float(goal_item.score_percent)
+            updates = [{
+                'id': str(pe.id),
+                'progressPercentage': float(pe.progress_percent),
+                'comment': pe.evidence_note or '',
+                'updatedBy': pe.logged_by.username if pe.logged_by else 'Intern',
+                'createdAt': pe.created_at.strftime('%Y-%m-%d %H:%M')
+            } for pe in goal_item.progress_entries.all().order_by('-created_at')]
 
-        data = serializer.data
-        data['progressUpdates'] = progress_updates
-        return Response({'code': 200, 'data': data})
+            data = {
+                'id': str(goal_item.id),
+                'title': goal_item.title,
+                'description': goal_item.description or '',
+                'due_date': cycle_end,
+                'dueDate': cycle_end,
+                'status': goal_item.status,
+                'priority': 'MEDIUM',
+                'completion_percentage': score_val,
+                'completionPercentage': score_val,
+                'progress': score_val,
+                'weight': goal_item.weight_percent,
+                'weightage': goal_item.weight_percent,
+                'cycle_name': cycle_name,
+                'cycleName': cycle_name,
+                'assigned_by_name': goal_item.goal_set.assigned_by.username if goal_item.goal_set.assigned_by else 'HR Admin',
+                'progressUpdates': updates
+            }
+            return Response({'code': 200, 'data': data})
+
+        return Response({'code': 404, 'message': 'Goal not found or access denied.'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class InternUpdateProgressView(APIView):
     """
     Update goal progress percentage (0.00 to 100.00).
     Enforces that the intern can only update progress, not goal title, weight, or owner.
-    Creates an auditable GoalProgress record.
+    Creates an auditable GoalProgress / KpiProgressEntry record.
+    Supports both direct Goal models and GoalItem models.
     """
     permission_classes = [permissions.IsAuthenticated]
 
@@ -314,10 +466,6 @@ class InternUpdateProgressView(APIView):
 
     def post(self, request, pk):
         profile = get_authenticated_intern_profile(request.user)
-        goal = Goal.objects.filter(id=pk, employee=profile).first()
-        if not goal:
-            return Response({'code': 404, 'message': 'Goal not found or access denied.'}, status=status.HTTP_404_NOT_FOUND)
-
         serializer = InternGoalProgressUpdateSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({'code': 400, 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -325,34 +473,64 @@ class InternUpdateProgressView(APIView):
         new_progress = serializer.validated_data['progress']
         comment = serializer.validated_data.get('comment', '').strip()
 
-        old_progress = goal.completion_percentage
-        goal.completion_percentage = new_progress
+        # 1. Try finding direct Goal
+        if is_valid_uuid(pk):
+            goal = Goal.objects.filter(id=pk, employee=profile).first()
+            if goal:
+                old_progress = goal.completion_percentage
+                goal.completion_percentage = new_progress
+                if new_progress >= Decimal('100.00'):
+                    goal.status = GoalStatus.COMPLETED
+                elif new_progress > Decimal('0.00') and goal.status == GoalStatus.NOT_STARTED:
+                    goal.status = GoalStatus.IN_PROGRESS
+                goal.save(update_fields=['completion_percentage', 'status', 'updated_at'])
 
-        # Auto-transition status
-        if new_progress >= Decimal('100.00'):
-            goal.status = GoalStatus.COMPLETED
-        elif new_progress > Decimal('0.00') and goal.status == GoalStatus.NOT_STARTED:
-            goal.status = GoalStatus.IN_PROGRESS
-        goal.save(update_fields=['completion_percentage', 'status', 'updated_at'])
+                progress_record = GoalProgress.objects.create(
+                    goal=goal,
+                    updated_by=request.user,
+                    progress_percentage=new_progress,
+                    comment=comment or f"Progress updated from {old_progress}% to {new_progress}%"
+                )
+                return Response({
+                    'code': 200,
+                    'message': 'Goal progress updated successfully',
+                    'data': {
+                        'id': str(goal.id),
+                        'progress': float(goal.completion_percentage),
+                        'status': goal.status,
+                        'auditId': str(progress_record.id)
+                    }
+                })
 
-        # Audit progress record
-        progress_record = GoalProgress.objects.create(
-            goal=goal,
-            updated_by=request.user,
-            progress_percentage=new_progress,
-            comment=comment or f"Progress updated from {old_progress}% to {new_progress}%"
-        )
+        # 2. Try finding GoalItem
+        goal_item = GoalItem.objects.filter(id=pk, goal_set__employee=profile).first()
+        if goal_item:
+            goal_item.current_progress = (new_progress / Decimal('100.00')) * goal_item.target_value
+            if new_progress >= Decimal('100.00'):
+                goal_item.status = 'COMPLETED'
+            elif new_progress > Decimal('0.00'):
+                goal_item.status = 'IN_PROGRESS'
+            goal_item.save(update_fields=['current_progress', 'status', 'updated_at'])
 
-        return Response({
-            'code': 200,
-            'message': 'Goal progress updated successfully',
-            'data': {
-                'id': str(goal.id),
-                'progress': float(goal.completion_percentage),
-                'status': goal.status,
-                'auditId': str(progress_record.id)
-            }
-        })
+            entry = KpiProgressEntry.objects.create(
+                goal_item=goal_item,
+                actual_value=goal_item.current_progress,
+                progress_percent=new_progress,
+                evidence_note=comment or f"Progress updated to {new_progress}%",
+                logged_by=request.user
+            )
+            return Response({
+                'code': 200,
+                'message': 'Goal progress updated successfully',
+                'data': {
+                    'id': str(goal_item.id),
+                    'progress': float(goal_item.score_percent),
+                    'status': goal_item.status,
+                    'auditId': str(entry.id)
+                }
+            })
+
+        return Response({'code': 404, 'message': 'Goal not found or access denied.'}, status=status.HTTP_404_NOT_FOUND)
 
 
 # ==============================================================================
@@ -362,56 +540,93 @@ class InternGoalCommentsView(APIView):
     """
     View comments thread on a goal or post a new progress note/reply to mentor.
     Anti-IDOR: Goal must belong to the authenticated intern (or assigned mentor).
+    Supports both direct Goal models and GoalItem models.
     """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         profile = get_authenticated_intern_profile(request.user)
-        # Verify access: intern owns the goal, or user is the intern's assigned mentor, or HR
         is_mentor = profile.manager == request.user or request.user.role in [UserRole.MANAGER, UserRole.HR, UserRole.SUPER_ADMIN]
-        goal = Goal.objects.filter(id=pk).first()
-        if not goal or (goal.employee != profile and not is_mentor):
-            return Response({'code': 404, 'message': 'Goal not found or access denied.'}, status=status.HTTP_404_NOT_FOUND)
 
-        comments = InternGoalComment.objects.filter(goal=goal).order_by('created_at')
-        serializer = InternGoalCommentSerializer(comments, many=True)
-        return Response({'code': 200, 'data': serializer.data})
+        if is_valid_uuid(pk):
+            goal = Goal.objects.filter(id=pk).first()
+            if goal and (goal.employee == profile or is_mentor):
+                comments = InternGoalComment.objects.filter(goal=goal).order_by('created_at')
+                serializer = InternGoalCommentSerializer(comments, many=True)
+                return Response({'code': 200, 'data': serializer.data})
+
+        goal_item = GoalItem.objects.filter(id=pk).first()
+        if goal_item and (goal_item.goal_set.employee == profile or is_mentor):
+            entries = []
+            for pe in goal_item.progress_entries.all().select_related('logged_by').order_by('created_at'):
+                entries.append({
+                    'id': str(pe.id),
+                    'authorName': pe.logged_by.username if pe.logged_by else 'Intern',
+                    'authorRole': getattr(pe.logged_by, 'role', 'INTERN') if pe.logged_by else 'INTERN',
+                    'comment': pe.evidence_note or '',
+                    'isMentor': False,
+                    'createdAt': pe.created_at.strftime('%Y-%m-%d %H:%M'),
+                    'parentId': None
+                })
+            return Response({'code': 200, 'data': entries})
+
+        return Response({'code': 404, 'message': 'Goal not found or access denied.'}, status=status.HTTP_404_NOT_FOUND)
 
     def post(self, request, pk):
         profile = get_authenticated_intern_profile(request.user)
         is_mentor = profile.manager == request.user or request.user.role in [UserRole.MANAGER, UserRole.HR, UserRole.SUPER_ADMIN]
-        goal = Goal.objects.filter(id=pk).first()
-        if not goal or (goal.employee != profile and not is_mentor):
-            return Response({'code': 404, 'message': 'Goal not found or access denied.'}, status=status.HTTP_404_NOT_FOUND)
 
         comment_text = request.data.get('comment', '').strip()
         if not comment_text:
             return Response({'code': 400, 'message': 'Comment text cannot be empty.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        parent_id = request.data.get('parentId') or request.data.get('parent')
-        parent_comment = None
-        if parent_id:
-            parent_comment = InternGoalComment.objects.filter(id=parent_id, goal=goal).first()
+        if is_valid_uuid(pk):
+            goal = Goal.objects.filter(id=pk).first()
+            if goal and (goal.employee == profile or is_mentor):
+                parent_id = request.data.get('parentId') or request.data.get('parent')
+                parent_comment = None
+                if parent_id:
+                    parent_comment = InternGoalComment.objects.filter(id=parent_id, goal=goal).first()
 
-        author_name = request.user.username
-        user_profile = getattr(request.user, 'profile', None)
-        if user_profile and user_profile.full_name:
-            author_name = user_profile.full_name
-        elif hasattr(request.user, 'get_full_name') and request.user.get_full_name():
-            author_name = request.user.get_full_name()
+                author_name = get_user_display_name(request.user)
 
-        new_comment = InternGoalComment.objects.create(
-            goal=goal,
-            author=request.user,
-            author_name=author_name,
-            author_role='MENTOR' if is_mentor else 'INTERN',
-            comment=comment_text,
-            is_mentor=is_mentor,
-            parent=parent_comment
-        )
+                new_comment = InternGoalComment.objects.create(
+                    goal=goal,
+                    author=request.user,
+                    author_name=author_name,
+                    author_role='MENTOR' if is_mentor else 'INTERN',
+                    comment=comment_text,
+                    is_mentor=is_mentor,
+                    parent=parent_comment
+                )
 
-        serializer = InternGoalCommentSerializer(new_comment)
-        return Response({'code': 201, 'message': 'Comment posted successfully', 'data': serializer.data}, status=status.HTTP_201_CREATED)
+                serializer = InternGoalCommentSerializer(new_comment)
+                return Response({'code': 201, 'message': 'Comment posted successfully', 'data': serializer.data}, status=status.HTTP_201_CREATED)
+
+        goal_item = GoalItem.objects.filter(id=pk).first()
+        if goal_item and (goal_item.goal_set.employee == profile or is_mentor):
+            entry = KpiProgressEntry.objects.create(
+                goal_item=goal_item,
+                actual_value=goal_item.current_progress,
+                progress_percent=goal_item.score_percent,
+                evidence_note=comment_text,
+                logged_by=request.user
+            )
+            return Response({
+                'code': 201,
+                'message': 'Comment posted successfully',
+                'data': {
+                    'id': str(entry.id),
+                    'authorName': get_user_display_name(request.user),
+                    'authorRole': getattr(request.user, 'role', 'INTERN'),
+                    'comment': comment_text,
+                    'isMentor': is_mentor,
+                    'createdAt': entry.created_at.strftime('%Y-%m-%d %H:%M'),
+                    'parentId': None
+                }
+            }, status=status.HTTP_201_CREATED)
+
+        return Response({'code': 404, 'message': 'Goal not found or access denied.'}, status=status.HTTP_404_NOT_FOUND)
 
 
 # ==============================================================================
@@ -1216,7 +1431,7 @@ class InternJourneyView(APIView):
             'code': 200,
             'data': {
                 'intern': {
-                    'name': profile.full_name or profile.user.get_full_name() or profile.user.username,
+                    'name': profile.full_name or get_user_display_name(profile.user),
                     'email': profile.user.email,
                     'employeeCode': profile.employee_code,
                     'department': dept_name,

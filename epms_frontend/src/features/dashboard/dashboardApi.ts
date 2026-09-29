@@ -57,7 +57,36 @@ export const dashboardApi = api.injectEndpoints({
     }),
     getInternGoals: builder.query<InternGoalItem[], void>({
       query: () => "/intern/my-goals/",
-      transformResponse: (res: any) => res?.data ?? res,
+      transformResponse: (res: any) => {
+        const raw = res?.data ?? res ?? [];
+        if (!Array.isArray(raw)) return [];
+        return raw.map((g: any) => ({
+          ...g,
+          dueDate: g.dueDate || g.due_date || null,
+          cycleName: g.cycleName || g.cycle_name || 'Current Term',
+          progress: Number(g.progress ?? g.completion_percentage ?? g.current_progress ?? 0),
+          completionPercentage: Number(g.completionPercentage ?? g.completion_percentage ?? g.progress ?? 0),
+          weightage: Number(g.weightage ?? g.weight ?? g.weight_percent ?? 20),
+          assignedByName: g.assignedByName || g.assigned_by_name || 'HR Admin',
+          comments: g.comments || [],
+        }));
+      },
+      providesTags: ["GoalSet"],
+    }),
+    assignGoal: builder.mutation<any, { employee: string; title: string; description?: string; due_date?: string; priority?: string; cycle?: string }>({
+      query: (body) => ({
+        url: "/goals/",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["GoalSet", "Employee", "Profile"],
+    }),
+    getAllAssignedGoals: builder.query<any[], void>({
+      query: () => "/goals/",
+      transformResponse: (res: any) => {
+        const raw = res?.results ?? res?.data ?? res ?? [];
+        return Array.isArray(raw) ? raw : [];
+      },
       providesTags: ["GoalSet"],
     }),
     updateInternGoalProgress: builder.mutation<any, { id: string; progress: number; comment?: string }>({
@@ -198,6 +227,8 @@ export const {
   useGetInternJourneyQuery,
   useGetInternScorecardQuery,
   useGetInternGoalsQuery,
+  useAssignGoalMutation,
+  useGetAllAssignedGoalsQuery,
   useUpdateInternGoalProgressMutation,
   useAddInternGoalCommentMutation,
   useGetInternTasksQuery,

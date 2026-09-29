@@ -38,7 +38,20 @@ class GoalViewSet(viewsets.ModelViewSet):
         return base_qs.filter(employee__user=user)
 
     def perform_create(self, serializer):
-        serializer.save(assigned_by=self.request.user)
+        kwargs = {'assigned_by': self.request.user}
+        if not serializer.validated_data.get('cycle'):
+            from apps.performance.models import PerformanceCycle
+            active_cycle = PerformanceCycle.objects.filter(status='ACTIVE').first() or PerformanceCycle.objects.first()
+            if active_cycle:
+                kwargs['cycle'] = active_cycle
+        if not serializer.validated_data.get('due_date'):
+            import datetime
+            cycle = kwargs.get('cycle') or serializer.validated_data.get('cycle')
+            if cycle and cycle.end_date:
+                kwargs['due_date'] = cycle.end_date
+            else:
+                kwargs['due_date'] = datetime.date.today() + datetime.timedelta(days=90)
+        serializer.save(**kwargs)
 
     def get_permissions(self):
         if self.action in ['create', 'destroy']:

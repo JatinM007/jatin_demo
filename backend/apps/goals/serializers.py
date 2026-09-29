@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from decimal import Decimal
 from apps.goals.models import Goal, KPI, GoalProgress
+from apps.performance.models import PerformanceCycle
+
 
 class KPISerializer(serializers.ModelSerializer):
     achievement_percentage = serializers.DecimalField(
@@ -29,8 +31,10 @@ class GoalProgressSerializer(serializers.ModelSerializer):
 class GoalSerializer(serializers.ModelSerializer):
     employee_name = serializers.CharField(source='employee.full_name', read_only=True)
     employee_code = serializers.CharField(source='employee.employee_code', read_only=True)
+    cycle = serializers.PrimaryKeyRelatedField(queryset=PerformanceCycle.objects.all(), required=False, allow_null=True)
     cycle_name = serializers.CharField(source='cycle.name', read_only=True)
     assigned_by_name = serializers.CharField(source='assigned_by.username', read_only=True)
+    due_date = serializers.DateField(required=False, allow_null=True)
     kpis = KPISerializer(many=True, read_only=True)
     recent_progress = serializers.SerializerMethodField()
 
